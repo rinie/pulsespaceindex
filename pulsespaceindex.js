@@ -148,7 +148,7 @@ class PulseSpaceIndex {
 if (process.argv[2].toLowerCase().endsWith('.js')) {
 	debug(`Samples: ${process.argv[2]}`);
 
-	const samples = require(`./${process.argv[2]}`);
+	const samples = require(process.argv[2]);
 	for (let j = 0; j < samples.samples.length; j++) {
 		let sample = samples.samples[j];
 		debugv(sample);
