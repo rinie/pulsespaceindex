@@ -1,0 +1,22 @@
+{
+  "name": "pulsespaceindex",
+  "version": "1.0.0",
+  "description": "Ook pulse (On) Space (Off) Index processing",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "ook",
+    "RF",
+    "433",
+    "pulse",
+    "space",
+    "index"
+  ],
+  "author": "Rinie Kervel",
+  "license": "MIT",
+  "dependencies": {
+    "debug": "^3.1.0"
+  }
+}
