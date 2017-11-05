@@ -27,20 +27,14 @@ class PulseSpaceIndex {
 		this.pi = pi;
 		this.si = si;
 	}
-};
-/*
-    	let repeat = payload[0x5];
-    	let pulseSpaceCount = payload[0x6] | payload[0x7] << 8;
-    	let psc = (pulseSpaceCount + 8 < payload.length) ? pulseSpaceCount + 8 : payload.length;
+	microsToPsi(pulses) { // convert pulseSpace micro signal to psi
+		let repeat = 0;
+    	let pulseSpaceCount = pulses.length;
     	let psValue = [];
     	let psCount = [];
     	let nPulseSpace = 0;
     	for (let i = 8; i < psc; i++) {
-			let ps = payload[i];
-			if (ps === 0) {  // 0 then big endian 2 bytes
-				ps = (payload[i + 1] << 8) | payload[i + 2];
-				i += 2;
-			}
+			let ps = pulses[i];
 			let j = psValue.indexOf(ps);
 			if (j === -1) {
 				//pulseSpace.push(ps); // ms decode
@@ -54,7 +48,7 @@ class PulseSpaceIndex {
 		}
 		let pulseSpace = [];
 		for (let i = 0; i < psValue.length; i++) {
-			pulseSpace[i] = {ps: psValue[i], count: psCount[i], ms: Math.round(psValue[i] * 8192 / 269)};
+			pulseSpace[i] = {ps: psValue[i], count: psCount[i], ms: psValue[i]};
 		}
 
 		pulseSpace.sort((a,b) => a.ps - b.ps);
@@ -64,13 +58,11 @@ class PulseSpaceIndex {
 		let psct = 0;
 		let i = 0;
 		let minGap = (psv < 10) ? 1 : (psv < 100) ? 3 : (psv < 1000) ? 10 : 100;
-		let ticks = [];
 		let ms = [];
 		let counts = [];
 		for (; i < pulseSpace.length; i++) {
 			if (pulseSpace[i].ps > psv + minGap) {
 				pulseSpace[i-1].totalCount = psct;
-				ticks.push(pulseSpace[i-1].ps);
 				ms.push(pulseSpace[i-1].ms);
 				counts.push(pulseSpace[i-1].totalCount);
 				index++;
@@ -85,7 +77,6 @@ class PulseSpaceIndex {
 			pulseSpace[i] = {ps: pulseSpace[i].ps, count: pulseSpace[i].count, ms: pulseSpace[i].ms, index: index};
 		}
 		pulseSpace[i-1].totalCount = psct;
-		ticks.push(pulseSpace[i-1].ps);
 		ms.push(pulseSpace[i-1].ms);
 		counts.push(pulseSpace[i-1].totalCount);
 
@@ -95,12 +86,9 @@ class PulseSpaceIndex {
     	let psx = 0;
     	let psxi = 0;
     	let fLastWas2 = false;
-    	for (let i = 8; i < psc; i++) {
-			let ps = payload[i];
-			if (ps === 0) { // 0 then big endian 2 bytes
-				ps = (payload[i + 1] << 8) | payload[i + 2];
-				i += 2;
-			}
+		for (; i < pulseSpace.length; i++) {
+			let ps = pulses[i];
+
 			let psi = pulseSpace.find((a) => a.ps === ps);
 			pulseSpace2 = pulseSpace2 + psi.index.toString(16);
 
@@ -135,17 +123,17 @@ class PulseSpaceIndex {
 			pulseSpaceX = pulseSpaceX + psx.toString(16).toUpperCase();
 			psxi = 0;
 		}
-
-    	return  {signalType: signalType, frameCount: repeat + 1, count: pulseSpaceCount,
-    		ticks: ticks,
-    		counts: counts,
-    		micros: ms,
-    		psi: pulseSpace2,
-    		psx: pulseSpaceX.toUpperCase()};
+		// put in this
+		this.psi = pulseSpace2;
+		this.count = pulseSpaceCount;
+		this.micros = ms;
+		this.frameCount = repeat + 1;
+		//this.signalType = signalType;
+		this.psx = pulseSpaceX.toUpperCase()
     }
-*/
+};
 
-if (process.argv[2].toLowerCase().endsWith('.js')) {
+if (process.argv[2].toLowerCase().endsWith('.js')) { // js module
 	debug(`Samples: ${process.argv[2]}`);
 
 	const samples = require(process.argv[2]);
@@ -183,9 +171,16 @@ if (process.argv[2].toLowerCase().endsWith('.js')) {
 	}
 }
 else { // assume csv or text
+	const readline = require('readline');
 	const fs = require('fs');
-	fs.readFile(`./${process.argv[2]}`, 'utf8', (err, data) => {
-	  if (err) throw err;
-	  console.log(data.toString());
+	var lc = 0;
+	const rl = readline.createInterface({
+	  input: fs.createReadStream(`./${process.argv[2]}`),
+	  crlfDelay: Infinity
+	});
+
+	rl.on('line', (line) => {
+	  console.log(line);
+	  lc++;
 	});
 }
