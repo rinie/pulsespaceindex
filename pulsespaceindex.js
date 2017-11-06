@@ -23,6 +23,16 @@ class PulseSpaceIndex {
 		let si = '';
 		let counts = [];
 
+		// check for 2 or 3 dominating data counts: Single pulse and up to 2 spaces or 2 p/s values
+		// definitely longer: header/footer signals
+		// shorter (spikes) or small difference: merge
+		// more data values: unknown encoding for this approach
+		if (this.micros !== null) {
+			for (let i = 0; i < this.micros.length; i++) {
+				counts[i] = [0, 0, 0];
+			}
+		}
+
 		for (let i = 0; i < psi.length-1; i+= 2) {
 			pi = pi + psi[i];
 			if (typeof counts[psi[i]] == 'undefined') {
@@ -42,11 +52,23 @@ class PulseSpaceIndex {
 				counts[psi[i + 1]][2] += 1;
 			}
 		}
+		if (psi.length & 1) { // odd so process last pulse
+			let i = psi.length-1;
+			pi = pi + psi[i];
+			if (typeof counts[psi[i]] == 'undefined') {
+				counts[psi[i]] = [1, 1, 0];
+			}
+			else {
+				counts[psi[i]][0] += 1;
+				counts[psi[i]][1] += 1;
+			}
+		}
 		this.counts = counts;
 		this.pi = pi;
 		this.si = si;
 	}
-	microsToPsi(pulses) { // convert pulseSpace micro signal to psi
+	microsToPsi(pulses, comment) { // convert pulseSpace micro signal to psi
+		debugv('microsToPsi ', comment);
 		let repeat = 0;
     	let pulseSpaceCount = pulses.length;
     	let psValue = [];
@@ -199,6 +221,7 @@ if (process.argv[2].toLowerCase().endsWith('.js')) { // js module
 	}
 }
 else { // assume csv or text
+	debug(`Samples csvtxt: ${process.argv[2]}`);
 	const readline = require('readline');
 	const fs = require('fs');
 	var lc = 0;
@@ -213,26 +236,22 @@ else { // assume csv or text
 			debugv('comment ', line);
 		}
 		else if (line.includes('=')) {
-			debugv('rflink ', line);
-			let pulsess = line.split(')=')[1].split(',');
-			pulsess.pop(); // ;
-			//debugv('rflink ', pulsess);
-			let pulses = Array.from(pulsess, x => Number(x));
-			//debugv('rflink pulses', pulses);
+			// input like 20;B9;DEBUG;Pulses=132;Pulses(uSec)=200,2550,150,...;
+			// match )= until eol or ; split on ,
+			let pulses = Array.from(line.match(/\)=([^;]+)/)[1].split(','), x => Number(x));
 			var psi = new PulseSpaceIndex(null);
-			psi.microsToPsi(pulses);
+			psi.microsToPsi(pulses, 'rflink:' + line);
 			psi.analyse();
 			debug(psi);
 		}
 		else {
-			debugv('pilight ', line);
+			// input like ev1527 253 759 759 253 759...
+			// split on space skip first element
 			let pulsess = line.split(' ');
 			pulsess.shift();
-			//debugv('pilight ', pulsess);
 			let pulses = Array.from(pulsess, x => Number(x));
-			//debugv(pulses);
 			var psi = new PulseSpaceIndex(null);
-			psi.microsToPsi(pulses);
+			psi.microsToPsi(pulses, 'pilight:' + line);
 			psi.analyse();
 			debug(psi);
 		}
