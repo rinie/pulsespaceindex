@@ -9,3 +9,4 @@ Basic is an array of microsecond pulses of OOK signals
 Either indexed (pulsespaceindex.h or pimatic) or not
 
 set DEBUG=*
+set DEBUG_DEPTH=3

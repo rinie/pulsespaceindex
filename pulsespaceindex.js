@@ -29,39 +29,89 @@ class PulseSpaceIndex {
 		// more data values: unknown encoding for this approach
 		if (this.micros !== null) {
 			for (let i = 0; i < this.micros.length; i++) {
-				counts[i] = [0, 0, 0];
+				// pulseSpace[i] = {ps: psValue[i], count: psCount[i]};
+				//counts[i] = [0, 0, 0];
+				counts[i] = {i: i, t: this.micros[i], ct: [0, 0, 0]};
 			}
 		}
 
 		for (let i = 0; i < psi.length-1; i+= 2) {
 			pi = pi + psi[i];
 			if (typeof counts[psi[i]] == 'undefined') {
-				counts[psi[i]] = [1, 1, 0];
+				//counts[psi[i]] = [1, 1, 0];
+				counts[psi[i]] = {i: psi[i], t: null , ct: [1, 1, 0]};
 			}
 			else {
-				counts[psi[i]][0] += 1;
-				counts[psi[i]][1] += 1;
+				counts[psi[i]].ct[0] += 1;
+				counts[psi[i]].ct[1] += 1;
 			}
 
 			si = si + psi[i + 1];
 			if (typeof counts[psi[i+1]] == 'undefined') {
-				counts[psi[i + 1]] = [1, 0, 1];
+				//counts[psi[i + 1]] = [1, 0, 1];
+				counts[psi[i]] = {i: psi[i], t: null , ct: [1, 0, 1]};
 			}
 			else {
-				counts[psi[i + 1]][0] += 1;
-				counts[psi[i + 1]][2] += 1;
+				counts[psi[i + 1]].ct[0] += 1;
+				counts[psi[i + 1]].ct[2] += 1;
 			}
 		}
 		if (psi.length & 1) { // odd so process last pulse
 			let i = psi.length-1;
 			pi = pi + psi[i];
 			if (typeof counts[psi[i]] == 'undefined') {
-				counts[psi[i]] = [1, 1, 0];
+				//counts[psi[i]] = [1, 1, 0];
+				counts[psi[i]] = {i: psi[i], t: null , ct: [1, 1, 0]};
 			}
 			else {
-				counts[psi[i]][0] += 1;
-				counts[psi[i]][1] += 1;
+				counts[psi[i]].ct[0] += 1;
+				counts[psi[i]].ct[1] += 1;
 			}
+		}
+		// now check dominating pulse and space counts
+		let skip = 0;
+		// 2 max counts
+		let pDomCount = [0, 0];
+		let sDomCount = [0, 0];
+		for (let i = 0; i < counts.length; i++) {
+			if (counts[i].ct[0] === 0) {
+				skip++;
+			}
+			else if (skip > 0) {
+				counts[i].i -= skip;
+			}
+			if (counts[i].ct[1] > counts[pDomCount[0]].ct[1]) {
+				pDomCount[0] = i;
+			}
+			if (counts[i].ct[2] > counts[sDomCount[0]].ct[2]) {
+				sDomCount[0] = i;
+			}
+		}
+
+		if (pDomCount[0] === 0) {
+			pDomCount[1] = 1;
+		}
+		if (sDomCount[0] === 0) {
+			sDomCount[1] = 1;
+		}
+		for (let i = 0; i < counts.length; i++) {
+			if ((i !== pDomCount[0]) && ((counts[i].ct[1] <= counts[pDomCount[0]].ct[1]))
+				&& (counts[i].ct[1] > counts[pDomCount[1]].ct[1])){
+				pDomCount[1] = i;
+			}
+			if ((i !== sDomCount[0]) && ((counts[i].ct[2] <= counts[sDomCount[0]].ct[2]))
+				&& (counts[i].ct[2] > counts[sDomCount[1]].ct[2])){
+				sDomCount[1] = i;
+			}
+		}
+
+		counts[pDomCount[0]].p = 0;
+		if (counts[pDomCount[1]].ct[1] > 2) {
+			counts[pDomCount[1]].p = 1;
+		}
+		counts[sDomCount[0]].s = 0;
+		if (counts[sDomCount[1]].ct[2] > 2) {
+			counts[sDomCount[1]].s = 1;
 		}
 		this.counts = counts;
 		this.pi = pi;
