@@ -1,3 +1,4 @@
+//test with node pulsespaceindex.js ./samples/blsamples.js
 module.exports = {
 samples:[
 { signalType: 'ook433',

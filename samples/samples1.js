@@ -1,3 +1,4 @@
+//test with node pulsespaceindex.js ./samples/samples1.js
 module.exports = {
 samples:[
 { comment:`
