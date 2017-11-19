@@ -3,8 +3,8 @@
 // 		pulseSpace.sort((a,b) => a.ps - b.ps);
 // use header/footer pulse space conventions of lirc/pilight and nodo/rflink
 // use basic observation from bye bye stand by protocol: send 3 times, receive 2 times identical packages: repetition is a feature.
-const debug = require('debug')('pulsespaceindex');
-const debugv = require('debug')('pulsespaceindexverbose');
+const debug = require('debug')('psi');
+const debugv = require('debug')('psiv');
 const psixPulse = 0, psixSpace = 1, psixPulseSpace = 2; // fix with ES6 enums but...
 
 class PulseSpaceIndex {
