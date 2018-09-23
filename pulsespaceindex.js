@@ -37,34 +37,131 @@ class PulseSpaceIndex {
 		}
 
 		for (let i = 0; i < psi.length-1; i+= 2) {
+			const psii = parseInt(psi[i], 16);
 			pi = pi + psi[i];
-			if (typeof counts[psi[i]] == 'undefined') {
-				counts[psi[i]] = {i: psi[i], t: null , ct: [1, 0, 1]};
+			if (typeof counts[psii] == 'undefined') {
+				counts[psii] = {i: psii, t: null , ct: [1, 0, 1]}; // i: pssii or psi[i]?
 			}
 			else {
-				counts[psi[i]].ct[psixPulse] += 1;
-				counts[psi[i]].ct[psixPulseSpace] += 1;
+				counts[psii].ct[psixPulse] += 1;
+				counts[psii].ct[psixPulseSpace] += 1;
 			}
 
+			const sii = parseInt(psi[i + 1], 16);
 			si = si + psi[i + 1];
-			if (typeof counts[psi[i+1]] == 'undefined') {
-				counts[psi[i+1]] = {i: psi[i+1], t: null , ct: [0, 1, 1]};
+			if (typeof counts[sii] == 'undefined') {
+				counts[psi[sii]] = {i: sii, t: null , ct: [0, 1, 1]};
 			}
 			else {
-				counts[psi[i + 1]].ct[psixSpace] += 1;
-				counts[psi[i + 1]].ct[psixPulseSpace] += 1;
+				counts[sii].ct[psixSpace] += 1;
+				counts[sii].ct[psixPulseSpace] += 1;
 			}
 		}
 		if (psi.length & 1) { // odd so process last pulse
 			let i = psi.length-1;
+			const psii = parseInt(psi[i], 16);
 			pi = pi + psi[i];
-			if (typeof counts[psi[i]] == 'undefined') {
-				counts[psi[i]] = {i: psi[i], t: null , ct: [1, 0, 1]};
+			if (typeof counts[psii] == 'undefined') {
+				counts[psii] = {i: psii, t: null , ct: [1, 0, 1]};
 			}
 			else {
-				counts[psi[i]].ct[psixPulse] += 1;
-				counts[psi[i]].ct[psixPulseSpace] += 1;
+				counts[psii].ct[psixPulse] += 1;
+				counts[psii].ct[psixPulseSpace] += 1;
 			}
+		}
+
+		// check repeated packages data header/footer split
+		// start at largest time, split data as long as you keep 'large chunks'
+		// RF: prefer chunk start with pulse
+		// check # repeats and repeat length
+		// then check identical chunks... psi is string of hex characters.
+		let psiii = [];
+		for (let split = counts.length - 1; split > 2; split--) {
+			const splitv = split.toString(16); // header/footer (or no data/body) value
+			let start = 0;
+			let end = 0;
+			let psii = [];
+			for (let i = 0; i < psi.length; i++) {
+				// until split
+				for (; i < psi.length; i++) {
+					if (psi[i] >= splitv) {
+						end = i;
+						break;
+					}
+				}
+				for (; i < psi.length; i++) {
+					if (psi[i] < splitv) {
+						let e1 = (end & 1) ? end + 1 : end;
+						let e2 = (i & 1) ? i : i - 1;
+						if (e1 > start) {
+							//debugv('e1', i, start, end, e1, e2, psi.slice(start, e1));
+							psii.push(psi.slice(start, e1));
+							start = e1;
+						}
+						else {
+							debugv('e2', i, start, end, e1, e2, psi[i]);
+							//start = e2-1;
+						}
+						break;
+					}
+				}
+			}
+			// check signal/noise
+			let minPacket = 32;
+			let maxPacket = 32;
+			let isNoise = true;
+			let noiseCount = 0;
+			let signalCount = 0;
+			let repeatCount = 0;
+			let psiil = [];
+			for (let i = 0; i < psii.length; i++) {
+				let fFound = false;
+				for (let j = 0; j < psiil.length; j++) {
+					if (psii[i] === psiil[j].psi) {
+						psiil[j].rep++;
+						fFound = true;
+						if (psii[i].length >= minPacket) {
+							repeatCount++; // signal repeat count
+						}
+						break;
+					}
+				}
+				if (!fFound) {
+					let fNoise = (psii[i].length < minPacket);
+					if (fNoise) {
+						// new noise value
+						noiseCount++;
+					}
+					else {
+						signalCount++;
+						if (psii[i].length > maxPacket) { // new length
+							maxPacket = psii[i].length;
+						}
+						// new data value
+						psiil.push({psi: psii[i], /* noise: fNoise, */ rep: 0, len: psii[i].length});
+					}
+				}
+			}
+			isNoise = (noiseCount >= signalCount) && (repeatCount <= 1);
+			if (!isNoise) {
+				psiii = {
+					packets: psiil,
+					split: split,
+					signalCount: signalCount,
+					noiseCount: noiseCount,
+					repeatCount: repeatCount,
+				}
+			}
+			// todo final split
+			//debugv(`Split ${split} mp:${maxPacket} sc: ${signalCount} nc: ${noiseCount} rc: ${repeatCount} try`);
+			//debugv('psiil', psiil);
+		}
+		if (typeof psiii.split == 'undefined') {
+			debugv('Split none');
+		}
+		else {
+			debugv(`Split ${psiii.split} sc: ${psiii.signalCount} nc: ${psiii.noiseCount} rc: ${psiii.repeatCount}`);
+			debug(psiii);
 		}
 		// now check dominating pulse and space counts
 		let skip = 0;
@@ -121,8 +218,19 @@ class PulseSpaceIndex {
 		this.counts = counts;
 		this.pi = pi;
 		this.si = si;
+		this.print();
 	}
-	microsToPsi(pulses, comment) { // convert pulseSpace micro signal to psi
+	print() { // uniform output format
+		//console.log('tja', this);
+		let sep = ',';
+		if (this.micros !== null) {
+			console.log(this.count.toString(), sep, "\'" + this.psi+ "\'", ',', this.micros.length, ',', ...this.micros, ',', (this.signalType).toString().replace(/ /g, '_'));
+		}
+		else {
+			console.log(this.count.toString(), sep, "\'" + this.psi+ "\'", ',', (this.signalType).toString().replace(/ /g, '_'));
+		}
+	}
+	microsToPsi(pulses, comment, signalType) { // convert pulseSpace micro signal to psi
 		debugv('microsToPsi ', comment);
 		let repeat = 0;
     	let pulseSpaceCount = pulses.length;
@@ -233,7 +341,7 @@ class PulseSpaceIndex {
 		this.count = this.psi.length;;
 		this.micros = ms;
 		this.frameCount = repeat + 1;
-		//this.signalType = signalType;
+		this.signalType = signalType;
 		//this.psx = pulseSpaceX.toUpperCase()
     }
 };
@@ -246,10 +354,11 @@ if (process.argv[2].toLowerCase().endsWith('.js')) { // js module
 		let sample = samples.samples[j];
 		debugv(sample);
 		if (sample.psi !== undefined && sample.pulseLengths === undefined) { // broadlink samples
-			var psi = new PulseSpaceIndex(sample.psi, sample.micros, sample.frameCount, sample.signalType);
+			var psi = new PulseSpaceIndex(sample.psi, sample.micros, sample.frameCount, 'broadlink:' + sample.signalType);
 		}
 		else if (sample.pulseLengths !== undefined) { // pimatic samples
-			var psi = new PulseSpaceIndex(sample.psi, sample.pulseLengths);
+			let brand = (sample.brands !== undefined) ? ('pimatic:' + sample.brands).split(',', 1) : 'pimatic';
+			var psi = new PulseSpaceIndex(sample.psi, sample.pulseLengths, 1, brand);
 		}
 		else { // arduino samples
 			let ps = sample.ps;
@@ -269,7 +378,10 @@ if (process.argv[2].toLowerCase().endsWith('.js')) { // js module
 					}
 				}
 			}
-			var psi = new PulseSpaceIndex(ps, sample.maxMicro, sample.frameCount, sample.signalType);
+			if (sample.signalType === undefined) {
+				sample.signalType = 'ook433';
+			}
+			var psi = new PulseSpaceIndex(ps, sample.avgMicro, sample.frameCount, 'NodoDueRkr:' + sample.signalType);
 		}
 		psi.analyse();
 		debug(psi);
@@ -295,7 +407,7 @@ else { // assume csv or text
 			// match )= until eol or ; split on ,
 			let pulses = Array.from(line.match(/\)=([^;]+)/)[1].split(','), x => Number(x));
 			var psi = new PulseSpaceIndex(null);
-			psi.microsToPsi(pulses, 'rflink:' + line);
+			psi.microsToPsi(pulses, 'rflink:' + line, 'rflink:' + (lc + 1) );
 			psi.analyse();
 			debug(psi);
 		}
@@ -303,10 +415,11 @@ else { // assume csv or text
 			// input like ev1527 253 759 759 253 759...
 			// split on space skip first element
 			let pulsess = line.split(' ');
+			let protocol = pulsess[0];
 			pulsess.shift();
 			let pulses = Array.from(pulsess, x => Number(x));
 			var psi = new PulseSpaceIndex(null);
-			psi.microsToPsi(pulses, 'pilight:' + line);
+			psi.microsToPsi(pulses, 'pilight:' + line, 'pilight:' + protocol);
 			psi.analyse();
 			debug(psi);
 		}
