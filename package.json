@@ -27,6 +27,11 @@
   "dependencies": {
     "debug": "^3.1.0"
   },
+  "devDependencies": {
+    "eslint": "^5.16.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-import": "^2.14.0"
+  },
   "deprecated": false,
   "description": "Ook pulse (On) Space (Off) Index processing",
   "keywords": [
@@ -42,6 +47,10 @@
   "name": "pulsespaceindex",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rinie/pulsespaceindex.git"
   },
   "version": "1.0.0"
 }
