@@ -8,4 +8,5 @@ node pulsespaceindex.js ./samples/blsamples.js  >>samples/debug.csv
 node index.js samples/rflinksamples.csv >>samples/debug.csv
 node index.js samples/pilightsamples.txt >>samples/debug.csv
 node index.js ./samples/pimaticsamples.js >>samples/debug.csv
+node index.js samples/rflinkdata.csv >>samples/debug.csv
 rem echo 'pulsespaceindex.js testend' >>samples/debug.csv

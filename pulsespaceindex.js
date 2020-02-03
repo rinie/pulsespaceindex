@@ -5,13 +5,15 @@
 // use header/footer pulse space conventions of lirc/pilight and nodo/rflink
 // use basic observation from bye bye stand by protocol:
 // send 3 times, receive 2 times identical packages: repetition is a feature.
+// OOK On Off Keying: Pulse is signal, Space is no signal...
 const debug = require('debug')('psi');
 const debugv = require('debug')('psiv');
 const readline = require('readline');
 const fs = require('fs');
 
-const psixPulse = 0; const psixSpace = 1; const
-  psixPulseSpace = 2; // fix with ES6 enums but...
+const psixPulse = 0;
+const psixSpace = 1;
+const psixPulseSpace = 2; // fix with ES6 enums but...
 
 class PulseSpaceIndex {
   constructor(psi, micros = null, frameCount = 1, signalType = 'ook433') {
@@ -20,9 +22,9 @@ class PulseSpaceIndex {
     this.count = (psi !== null) ? psi.length : null;
     this.micros = micros;
     this.counts = null; // filled by analyse
-    this.psi = psi;
-    this.pi = null;
-    this.si = null;
+    this.psi = psi; // Pulse Space Index
+    this.pi = null; // Pulse Index
+    this.si = null; //Space Index
   }
 
   analyse() {
@@ -44,6 +46,7 @@ class PulseSpaceIndex {
     }
 
     for (let i = 0; i < psi.length - 1; i += 2) {
+      // pulse 0,2,4...
       const psii = parseInt(psi[i], 16);
       pi += psi[i];
       if (typeof counts[psii] === 'undefined') {
@@ -53,6 +56,7 @@ class PulseSpaceIndex {
         counts[psii].ct[psixPulseSpace] += 1;
       }
 
+      // space 1,3,5,...
       const sii = parseInt(psi[i + 1], 16);
       si += psi[i + 1];
       if (typeof counts[sii] === 'undefined') {
