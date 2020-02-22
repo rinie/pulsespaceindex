@@ -27,18 +27,11 @@ class PulseSpaceIndex {
     this.si = null; //Space Index
   }
 
-  analyse() {
+  countPulseSpace() {
     const { psi } = this;
     let pi = '';
     let si = '';
     const counts = [];
-    // TODO: convert traditional code to ES6
-    // totals and frequency. merge/max data/skip holes and multi frame detection
-
-    // check for 2 or 3 dominating data counts: Single pulse and up to 2 spaces or 2 p/s values
-    // definitely longer: header/footer signals
-    // shorter (spikes) or small difference: merge
-    // more data values: unknown encoding for this approach
     if (this.micros !== null) {
       for (let i = 0; i < this.micros.length; i++) {
         counts[i] = { i, t: this.micros[i], ct: [0, 0, 0] };
@@ -66,6 +59,7 @@ class PulseSpaceIndex {
         counts[sii].ct[psixPulseSpace] += 1;
       }
     }
+
     if (psi.length & 1) { // odd so process last pulse
       const i = psi.length - 1;
       const psii = parseInt(psi[i], 16);
@@ -77,12 +71,19 @@ class PulseSpaceIndex {
         counts[psii].ct[psixPulseSpace] += 1;
       }
     }
+    this.counts = counts;
+    this.pi = pi;
+    this.si = si;
+  }
 
     // check repeated packages data header/footer split
     // start at largest time, split data as long as you keep 'large chunks'
     // RF: prefer chunk start with pulse
     // check # repeats and repeat length
     // then check identical chunks... psi is string of hex characters.
+  detectRepeatedPackages() {
+    const { psi } = this;
+    const counts = this.counts;
     let psiii = [];
     for (let split = counts.length - 1; split > 2; split--) {
       const splitv = split.toString(16); // header/footer (or no data/body) value
@@ -168,6 +169,17 @@ class PulseSpaceIndex {
       debugv(`Split ${psiii.split} sc: ${psiii.signalCount} nc: ${psiii.noiseCount} rc: ${psiii.repeatCount}`);
       debug(psiii);
     }
+    this.counts = counts;
+  }
+
+  // detect dominating pulse and space values
+  // distinct from Header Sync / Trailer space or preamble
+  // denoted as data pulse 0, data pulse 1, data space 0 and data space 1
+  // todo: PPM is single P, only (data) spaces have 2 values
+  //
+  detectPS01Values() {
+    const { psi } = this;
+    const counts = this.counts;
     // now check dominating pulse and space counts
     let skip = 0;
     // 2 max counts
@@ -219,9 +231,6 @@ class PulseSpaceIndex {
       counts[sDomCount[1]].s = 1;
     }
     this.counts = counts;
-    this.pi = pi;
-    this.si = si;
-    this.print();
   }
 
   print() { // uniform output format
@@ -232,6 +241,19 @@ class PulseSpaceIndex {
     } else {
       console.log(this.count.toString(), sep, `'${this.psi}'`, ',', (this.signalType).toString().replace(/ /g, '_'));
     }
+  }
+
+  analyse() {
+    const { psi } = this;
+    this.countPulseSpace();
+    // AGC/Signal detection may have single short pulse value
+    // likely wrong: merge with normal short pulse
+    // pi: '031111111111111...' then becomes pi: '020000000000000
+    // todo this.fixFirstPulse();
+    // based on trailing space / signal timeout detect repeated packages first/last may be partial
+    this.detectRepeatedPackages();
+    this.detectPS01Values();
+    this.print();
   }
 
   microsToPsi(pulses, comment, signalType) { // convert pulseSpace micro signal to psi
@@ -261,25 +283,41 @@ class PulseSpaceIndex {
     }
     pulseSpace.sort((a, b) => a.ps - b.ps);
     // debugv(pulseSpace);
-
+    // 2020: longest pulse is signal determines tolerance
+    // ....: longest gaps are no signal: Intergap or end of packege or both
+    // ....: longest gaps distance indicate repeated packages/frameCount?
+    //.....: move to analyse and don't merge?
     // merge values within minGap range
-    let index = 0;
-    let psv = psValue[0];
-    let psct = 0;
-    // let minGap = (psv < 10) ? 1 : (psv < 100) ? 3 : (psv < 1000) ? 10 : 100;
-    let minGap = (psv < 1000) ? 50 : 100;
+/*
+// Due to sensor lag, when received, Marks  tend to be 100us too long and
+//                                   Spaces tend to be 100us too short
+#define MARK_EXCESS    100
+
+// Upper and Lower percentage tolerances in measurements
+#define TOLERANCE       25
+#define LTOL            (1.0 - (TOLERANCE/100.))
+#define UTOL            (1.0 + (TOLERANCE/100.))
+
+// Minimum gap between IR transmissions
+#define _GAP            5000
+*/
     const ms = [];
     const counts = [];
     let i = 0;
+    let index = 0;
+    let psv = pulseSpace[i].ps;
+    let psct = 0;
+    // let minGap = (psv < 10) ? 1 : (psv < 100) ? 3 : (psv < 1000) ? 10 : 100;
+    let mergeGap = psv + (psv < 1000) ? 50 : 100;
     for (; i < pulseSpace.length; i++) {
-      if (pulseSpace[i].ps > psv + minGap) {
+      if (pulseSpace[i].ps > mergeGap) {
         pulseSpace[i - 1].totalCount = psct;
         ms.push(pulseSpace[i - 1].ps);
         counts.push(pulseSpace[i - 1].totalCount);
         index++;
         psct = pulseSpace[i].count;
         psv = pulseSpace[i].ps;
-        minGap = (psv < 1000) ? 50 : 100;
+        mergeGap = psv + (psv < 1000) ? 50 : 100;
       } else {
         psct += pulseSpace[i].count;
         psv = pulseSpace[i].ps;
@@ -342,7 +380,6 @@ class PulseSpaceIndex {
     this.micros = ms;
     this.frameCount = repeat + 1;
     this.signalType = signalType;
-    // this.psx = pulseSpaceX.toUpperCase()
   }
 }
 
