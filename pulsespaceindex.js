@@ -8,7 +8,8 @@
 // OOK On Off Keying: Pulse is signal, Space is no signal...
 const debug = require('debug')('psi');
 const debugv = require('debug')('psiv');
-const readline = require('readline');
+const debugm = require('debug')('psim');
+const readline = require('readline');
 const fs = require('fs');
 
 const psixPulse = 0;
@@ -34,10 +35,23 @@ class PulseSpaceIndex {
     const counts = [];
     if (this.micros !== null) {
       for (let i = 0; i < this.micros.length; i++) {
-        counts[i] = { i, t: this.micros[i], ct: [0, 0, 0] };
+        counts[i] = { i:i, t: this.micros[i], ct: [0, 0, 0] };
       }
     }
-
+    else {
+      for (let i = 0; i < psi.length - 1; i ++) {
+        const psii = parseInt(psi[i], 16);
+        if (typeof counts[psii] === 'undefined') {
+          counts[psii] = { i: psii, t: null, ct: [0, 0, 0] }; // i: pssii or psi[i]?
+         }
+      }
+      // fill blanks
+      for (let i = 0; i < counts.length; i++) {
+        if (typeof counts[i] === 'undefined') {
+          counts[i] = { i: i, t: null, ct: [0, 0, 0] };
+         }
+       }
+    }
     for (let i = 0; i < psi.length - 1; i += 2) {
       // pulse 0,2,4...
       const psii = parseInt(psi[i], 16);
@@ -53,7 +67,7 @@ class PulseSpaceIndex {
       const sii = parseInt(psi[i + 1], 16);
       si += psi[i + 1];
       if (typeof counts[sii] === 'undefined') {
-        counts[psi[sii]] = { i: sii, t: null, ct: [0, 1, 1] };
+        counts[sii] = { i: sii, t: null, ct: [0, 1, 1] };
       } else {
         counts[sii].ct[psixSpace] += 1;
         counts[sii].ct[psixPulseSpace] += 1;
@@ -181,28 +195,16 @@ class PulseSpaceIndex {
     const { psi } = this;
     const counts = this.counts;
     // now check dominating pulse and space counts
-    let skip = 0;
     // 2 max counts
     const pDomCount = [0, 0];
     const sDomCount = [0, 0];
     for (let i = 0; i < counts.length; i++) {
-      if (typeof counts[i] === 'undefined') {
-        counts[i] = { i: null, t: null, ct: [0, 0, 0] };
-        skip++;
-      } else {
-        if (counts[i].ct[psixPulseSpace] === 0) {
-          counts[i].i = null;
-          skip++;
-        } else if (skip > 0) {
-          counts[i].i -= skip;
-        }
         if (counts[i].ct[psixPulse] > counts[pDomCount[0]].ct[psixPulse]) {
           pDomCount[0] = i;
         }
         if (counts[i].ct[psixSpace] > counts[sDomCount[0]].ct[psixSpace]) {
           sDomCount[0] = i;
         }
-      }
     }
 
     if (pDomCount[0] === 0) {
@@ -221,15 +223,30 @@ class PulseSpaceIndex {
         sDomCount[1] = i;
       }
     }
+    // 1 or 2 pulsecounts?
+    // depends on nr repeats
+    if (pDomCount[0] >  pDomCount[1]) {
+      const swap = pDomCount[1];
+      pDomCount[1] = pDomCount[0];
+      pDomCount[0] = swap
+    }
+    if (sDomCount[0] > sDomCount[1]) {
+      const swap = sDomCount[1];
+      sDomCount[1] = sDomCount[0];
+      sDomCount[0] = swap;
+    }
 
+    const minDomCount = 2; // max one start/one stop sync?
     counts[pDomCount[0]].p = 0;
-    if (counts[pDomCount[1]].ct[psixPulse] > 2) {
+    if (counts[pDomCount[1]].ct[psixPulse] > minDomCount && pDomCount[1] <= sDomCount[1] + 1) {
       counts[pDomCount[1]].p = 1;
     }
     counts[sDomCount[0]].s = 0;
-    if (counts[sDomCount[1]].ct[psixSpace] > 2) {
+    if (counts[sDomCount[1]].ct[psixSpace] > minDomCount) {
       counts[sDomCount[1]].s = 1;
     }
+
+    // todo: merge pulse gaps until sDomCount[1]..
     this.counts = counts;
   }
 
@@ -251,19 +268,20 @@ class PulseSpaceIndex {
     // pi: '031111111111111...' then becomes pi: '020000000000000
     // todo this.fixFirstPulse();
     // based on trailing space / signal timeout detect repeated packages first/last may be partial
-    this.detectRepeatedPackages();
+    //this.detectRepeatedPackages();
     this.detectPS01Values();
     this.print();
   }
 
   microsToPsi(pulses, comment, signalType) { // convert pulseSpace micro signal to psi
-    debugv('microsToPsi ', comment);
+    debugm('microsToPsi ', comment);
     const repeat = 0;
     const pulseSpaceCount = pulses.length;
     const psValue = [];
     const psCount = [];
     let nPulseSpace = 0;
     // determine values and count
+    //debugm(pulses);
     for (let i = 0; i < pulseSpaceCount; i++) {
       const ps = pulses[i];
       const j = psValue.indexOf(ps);
@@ -279,9 +297,10 @@ class PulseSpaceIndex {
     // fill pulseSpace with these and sort
     const pulseSpace = [];
     for (let i = 0; i < psValue.length; i++) {
-      pulseSpace[i] = { ps: psValue[i], count: psCount[i] };
+      pulseSpace[i] = { ps: psValue[i], count: psCount[i]};
     }
     pulseSpace.sort((a, b) => a.ps - b.ps);
+    //debugm(pulseSpace);
     // debugv(pulseSpace);
     // 2020: longest pulse is signal determines tolerance
     // ....: longest gaps are no signal: Intergap or end of packege or both
@@ -303,35 +322,36 @@ class PulseSpaceIndex {
 */
     const ms = [];
     const counts = [];
-    let i = 0;
     let index = 0;
-    let psv = pulseSpace[i].ps;
     let psct = 0;
-    // let minGap = (psv < 10) ? 1 : (psv < 100) ? 3 : (psv < 1000) ? 10 : 100;
-    let mergeGap = psv + (psv < 1000) ? 50 : 100;
+    let psv = pulseSpace[0].ps;
+    let i = 0;
     for (; i < pulseSpace.length; i++) {
+      let mergeGap = psv + ((psv < 1000) ? 50 : 100);
       if (pulseSpace[i].ps > mergeGap) {
         pulseSpace[i - 1].totalCount = psct;
-        ms.push(pulseSpace[i - 1].ps);
-        counts.push(pulseSpace[i - 1].totalCount);
+        ms.push(psv);
+        counts.push(psct);
         index++;
         psct = pulseSpace[i].count;
         psv = pulseSpace[i].ps;
-        mergeGap = psv + (psv < 1000) ? 50 : 100;
       } else {
         psct += pulseSpace[i].count;
         psv = pulseSpace[i].ps;
       }
       pulseSpace[i] = { ps: pulseSpace[i].ps, count: pulseSpace[i].count, index };
     }
+    //debugm(pulseSpace);
+    //debugm(ms);
+    //debugm(counts);
     if (i > 0) {
       pulseSpace[i - 1].totalCount = psct;
       ms.push(pulseSpace[i - 1].ps);
       counts.push(pulseSpace[i - 1].totalCount);
     }
-    // debugv(pulseSpace);
-    // debugv(ms);
-    // debugv(counts);
+    //debugm(pulseSpace);
+    //debugm(ms);
+    //debugm(counts);
 
     // todo: sort unique values and index them psi
     let pulseSpace2 = '';

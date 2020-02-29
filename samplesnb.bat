@@ -1,4 +1,4 @@
-set DEBUG=
+set DEBUG=*
 set DEBUG_DEPTH=3
 set DEBUG_HIDE_DATE=Yes
 move samples\debug.csv samples\debug.cso
