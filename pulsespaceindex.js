@@ -195,57 +195,50 @@ class PulseSpaceIndex {
     const { psi } = this;
     const counts = this.counts;
     // now check dominating pulse and space counts
-    // 2 max counts
-    const pDomCount = [0, 0];
-    const sDomCount = [0, 0];
+    // max counts pulse and space counts
+    const domCountIndex = [[-1,-1], [-1,-1]];
+    const minDomCount = 3; // max one start/one stop sync?
     for (let i = 0; i < counts.length; i++) {
-        if (counts[i].ct[psixPulse] > counts[pDomCount[0]].ct[psixPulse]) {
-          pDomCount[0] = i;
+        for (let psix = 0; psix < psixPulseSpace; psix++) {
+          let ct = counts[i].ct[psix];
+          if (ct > minDomCount) {
+            if (domCountIndex[0][psix] === -1) {
+              domCountIndex[0][psix] = i;
+            }
+            else if (ct >= counts[domCountIndex[0][psix]].ct[psix]) {
+              domCountIndex[1][psix] = domCountIndex[0][psix];
+              domCountIndex[0][psix] = i;
+            }
+            else if (domCountIndex[1][psix] === -1) {
+              domCountIndex[1][psix] = i;
+            }
+            else if (ct >= counts[domCountIndex[1][psix]].ct[psix]) {
+              domCountIndex[1][psix] = i;
+            }
+          }
         }
-        if (counts[i].ct[psixSpace] > counts[sDomCount[0]].ct[psixSpace]) {
-          sDomCount[0] = i;
+    }
+
+    for (let psix = 0; psix < psixPulseSpace; psix++) {
+      if (domCountIndex[1][psix] !== -1 && domCountIndex[0][psix] > domCountIndex[1][psix]) {
+        const d = domCountIndex[0][psix];
+        domCountIndex[0][psix] = domCountIndex[1][psix];
+        domCountIndex[1][psix] = d;
+      }
+    }
+
+    // register in counts[].p
+    for (let i = 0; i < 2; i++) {
+       if (domCountIndex[i][psixPulse] !== -1) {
+          counts[domCountIndex[i][psixPulse]].p = i;
         }
     }
-
-    if (pDomCount[0] === 0) {
-      pDomCount[1] = 1;
+    // register in counts[].s
+    for (let i = 0; i < 2; i++) {
+       if (domCountIndex[i][psixSpace] !== -1) {
+          counts[domCountIndex[i][psixSpace]].s = i;
+        }
     }
-    if (sDomCount[0] === 0) {
-      sDomCount[1] = 1;
-    }
-    for (let i = 0; i < counts.length; i++) {
-      if ((i !== pDomCount[0]) && ((counts[i].ct[psixPulse] <= counts[pDomCount[0]].ct[psixPulse]))
-        && (counts[i].ct[psixPulse] > counts[pDomCount[1]].ct[psixPulse])) {
-        pDomCount[1] = i;
-      }
-      if ((i !== sDomCount[0]) && ((counts[i].ct[psixSpace] <= counts[sDomCount[0]].ct[psixSpace]))
-        && (counts[i].ct[psixSpace] > counts[sDomCount[1]].ct[psixSpace])) {
-        sDomCount[1] = i;
-      }
-    }
-    // 1 or 2 pulsecounts?
-    // depends on nr repeats
-    if (pDomCount[0] >  pDomCount[1]) {
-      const swap = pDomCount[1];
-      pDomCount[1] = pDomCount[0];
-      pDomCount[0] = swap
-    }
-    if (sDomCount[0] > sDomCount[1]) {
-      const swap = sDomCount[1];
-      sDomCount[1] = sDomCount[0];
-      sDomCount[0] = swap;
-    }
-
-    const minDomCount = 2; // max one start/one stop sync?
-    counts[pDomCount[0]].p = 0;
-    if (counts[pDomCount[1]].ct[psixPulse] > minDomCount && pDomCount[1] <= sDomCount[1] + 1) {
-      counts[pDomCount[1]].p = 1;
-    }
-    counts[sDomCount[0]].s = 0;
-    if (counts[sDomCount[1]].ct[psixSpace] > minDomCount) {
-      counts[sDomCount[1]].s = 1;
-    }
-
     // todo: merge pulse gaps until sDomCount[1]..
     this.counts = counts;
   }
