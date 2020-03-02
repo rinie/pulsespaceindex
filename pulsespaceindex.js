@@ -196,12 +196,13 @@ class PulseSpaceIndex {
     const counts = this.counts;
     // now check dominating pulse and space counts
     // max counts pulse and space counts
+    const maxDomCounts = 2;
     const domCountIndex = [[-1,-1], [-1,-1]];
-    const minDomCount = 3; // max one start/one stop sync?
+    const min01ValuesCount = 3; // max one start/one stop sync?
     for (let i = 0; i < counts.length; i++) {
         for (let psix = 0; psix < psixPulseSpace; psix++) {
           let ct = counts[i].ct[psix];
-          if (ct > minDomCount) {
+          if (ct > min01ValuesCount) {
             if (domCountIndex[0][psix] === -1) {
               domCountIndex[0][psix] = i;
             }
@@ -227,17 +228,43 @@ class PulseSpaceIndex {
       }
     }
 
+    let max01Index = 0;
     // register in counts[].p
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < maxDomCounts; i++) {
        if (domCountIndex[i][psixPulse] !== -1) {
           counts[domCountIndex[i][psixPulse]].p = i;
+          max01Index = domCountIndex[i][psixPulse];
         }
     }
     // register in counts[].s
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < maxDomCounts; i++) {
        if (domCountIndex[i][psixSpace] !== -1) {
           counts[domCountIndex[i][psixSpace]].s = i;
+          if (domCountIndex[i][psixSpace] > max01Index) {
+            max01Index = domCountIndex[i][psixSpace];
+          }
         }
+    }
+    //debugv('max01Index', max01Index);
+    for (let i = 0; i < max01Index; i++) {
+      if (counts[i].p === undefined && counts[i].ct[psixPulse] > 0) {
+        if (counts[i].s === undefined && counts[i].ct[psixSpace] > 0) {
+          let pMergeIndex = domCountIndex[0][psixPulse];
+          let sMergeIndex = domCountIndex[0][psixSpace]; //to simple closest to ...
+          //debugv('max01Index merge ps', max01Index, i);
+          counts[i].mergeToIx = [pMergeIndex, sMergeIndex];
+        }
+        else {
+          let pMergeIndex = domCountIndex[0][psixPulse];
+          //debugv('max01Index merge p', max01Index, i);
+          counts[i].mergeToIx = [pMergeIndex, -1];
+        }
+      }
+      else if (counts[i].s === undefined && counts[i].ct[psixSpace] > 0) {
+        let sMergeIndex = domCountIndex[0][psixSpace];
+        //debugv('max01Index merge s', max01Index, i);
+        counts[i].mergeToIx = [-1, sMergeIndex];
+      }
     }
     // todo: merge pulse gaps until sDomCount[1]..
     this.counts = counts;
