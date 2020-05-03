@@ -23,7 +23,7 @@ class PulseSpaceIndex {
     this.count = (psi !== null) ? psi.length : null;
     this.micros = micros;
     this.counts = null; // filled by analyse
-    this.lpst = '--------'; // llppsstt filled by detectPS01Values
+    this.l01t = '--------'; // ll0011tt Leader ps 0 ps 1 ps Trailer ps filled by detectPS01Values
     this.psx = null;
     this.psi = psi; // Pulse Space Index
     this.pi = null; // Pulse Index
@@ -193,6 +193,7 @@ class PulseSpaceIndex {
   // denoted as data pulse 0, data pulse 1, data space 0 and data space 1
   // todo: PPM is single P, only (data) spaces have 2 values
   //
+
   detectPS01Values() {
     const { psi } = this;
     const counts = this.counts;
@@ -200,9 +201,12 @@ class PulseSpaceIndex {
     // max counts pulse and space counts
     const maxDomCounts = 2;
     const domCountIndex = [[-1,-1], [-1,-1]];
-    const min01ValuesCount = 1; // max one start/one stop sync? was 3
+    let min01ValuesCount = 1; // max one start/one stop sync? was 3
     const maxI = (counts.length < 4) ? counts.length : 4;
     for (let i = 0; i < maxI; i++) {
+        if (i > 1) {
+          min01ValuesCount = 5;
+        }
         for (let psix = 0; psix < psixPulseSpace; psix++) {
           let ct = counts[i].ct[psix];
           if (ct > min01ValuesCount) {
@@ -254,19 +258,19 @@ class PulseSpaceIndex {
     }
     const psiLen = this.psi.length;
     // ll0011tt
-    let lpst = // leader pulse index, space index
+    let l01t = // leader pulse index, space index, 0 ps, 1 ps, t ps...
       ((this.psi[0] != domCountIndex[0][psixPulse]) ? this.psi[0] : '-')
       + ((this.psi[1] != domCountIndex[0][psixSpace]) ? this.psi[1] : '-')
-      // data 01 pulse
+      // data 0 pulse space
       + ((domCountIndex[0][psixPulse] != -1) ? domCountIndex[0][psixPulse] : '-')
-      + ((domCountIndex[1][psixPulse] != -1) ? domCountIndex[1][psixPulse] : '-')
-      // data 01 space
       + ((domCountIndex[0][psixSpace] != -1) ? domCountIndex[0][psixSpace] : '-')
+      // data 1 pulse space
+      + ((domCountIndex[1][psixPulse] != -1) ? domCountIndex[1][psixPulse] : '-')
       + ((domCountIndex[1][psixSpace] != -1) ? domCountIndex[1][psixSpace] : '-')
-      // trailer
+      // trailer pulse space (assumes no truncated packages
       + ((this.psi[psiLen-2] != domCountIndex[0][psixPulse]) ? this.psi[psiLen-2] : '-')
       + ((this.psi[psiLen-1] != domCountIndex[0][psixSpace]) ? this.psi[psiLen-1] : '-');
-    debugv('lpst', lpst, this.psi[0], this.psi[1], this.psi[psiLen-2], this.psi[psiLen-1], domCountIndex);
+    //debugv('l01t', l01t, this.psi[0], this.psi[1], this.psi[psiLen-2], this.psi[psiLen-1], domCountIndex);
     //debugv('max01Index', max01Index);
     for (let i = 0; i < max01Index; i++) {
       if (counts[i].p === undefined && counts[i].ct[psixPulse] > 0) {
@@ -290,7 +294,7 @@ class PulseSpaceIndex {
     }
     // todo: merge pulse gaps until sDomCount[1]..
     this.counts = counts;
-    this.lpst = lpst;
+    this.l01t = l01t;
   }
 
   print() { // uniform output format
@@ -302,6 +306,7 @@ class PulseSpaceIndex {
       console.log(this.count.toString(), sep, `'${this.psi}'`, sep, (this.signalType).toString().replace(/ /g, '_'));
     }
   }
+
 
   sxAdd(sx, data, constantMode = false, hexMode = false) {
     if (sx.constantMode !== constantMode) {
@@ -317,75 +322,91 @@ class PulseSpaceIndex {
   }
 
   /*
-   * Compact lpst
+   * Compact l10t
    * x 4 0/1 bits to one hex digit
    * todo: Pulse Distance modulation: all pulses are 0 c0...
    * todo: Kaku Old: c01, 0 01, 1, 10, 2/F 00
    * todo: Manchester/Biphase
    * todo: Header/Leader data Trailer/Pause. Longer signal or repeated 1s
    */
-  psix(s) {
+  psix(s, l01t) {
+    // l10t '--00-1-4' PPM/PDM pulse always 0, space has 0/1 values and trailer
+    /*
+    const l01tLeaderPulse = 0;
+    const l01tLeaderSpace = 1;
+    const l01t0Pulse = 2;
+    const l01t0Space = 3;
+    const l01t1Pulse = 4;
+    const l01t1Space = 5;
+    const l01tTrailerPulse = 6;
+    const l01tTrailerSpace = 7;
+    */
+    const dataType = (l01t[4] === '-') ? 's' : (l01t[5] === '-' ? 'p' : 'ps');
+    const fixedNoDataLeader = !(l01t[0] === '-' || l01t[1] === '-');
+    const fixedNoDataTrailer = !(l01t[6] === '-' || l01t[7] === '-');
+
     const sx = {
-      sx: '',
+      sx: l01t+':',
       hexMode: false,
       constantMode: false,
+      data0: [l01t[2], l01t[3]],
+      data1: [l01t[4], l01t[5]],
+      dataType: dataType,
+      start: ((fixedNoDataLeader) ? 2 : 0) + ((dataType == 's') ? 1 : 0),
+      end: s.length - ((fixedNoDataTrailer) ? 2 : 0),
+      increment: ((dataType == 'ps') ? 1 : 2)
     }
+
     // alternate > 1 sections with <= 1 sections,
     // <=1 sections always start with pulse, end with space...
-    let i = 0;
-    let j = 0;
-    while (i < s.length) {
+    let i = sx.start;
+    let j = i;
+    const len = sx.end;
+    const incr = sx.increment;
+    //debugv('psix', l01t, sx);
+    while (i < len) {
+      let noData = '';
       let iLast = i;
       // > 1 section
-      while ((j < s.length) && (s[j] > '1')) {
-        j++;
+      while ((j < len) && (s[j] > sx.data1[j%2])) {
+        noData += s[j];
+        j += incr;
       }
       if (j > i) {
-        if ((j % 2) !== 0) {
+        if ((incr === 1) && ((j % 2) !== 0)) {
+          noData += s[j];
           j++;
         }
-        this.sxAdd(sx, s.slice(i, j));
+        //debugv('nodata', noData, i, j);
+        this.sxAdd(sx, noData);
         i = j;
       }
 
       // <= 1 section
-      let pdm = true; // pulse all 0
-      while ((j < s.length) && (s[j] <= '1')) {
-        if (((j % 2) === 0) && s[j] != '0') {
-          //debug('psxSslice', j, s[j]);
-          pdm = false;
-        }
-        j++;
+      while ((j < len) && (s[j] <= sx.data1[j%2])) {
+        j += incr;
       }
       if (j > i) {
-        if (((j % 2) !== 0) && j < s.length) {
+        if ((incr === 1) && ((j % 2) !== 0) && j < len) {
           --j;
         }
-        if ((j - i) >= 4) { // else process with >1 section
-          //debug('psxSlice', i, j, pdm, s.slice(i, j));
-          let increment = 1;
-          let offset = 0;
-          if (pdm) { // c0 and 8 bits (4 spaces) 1 hex
-            increment = 2;
-            offset = 1;
+        while ((j - i) >= incr * 4) {
+          let s2 = '';
+          for (let l = 0; l < 4; l++) {
+            s2 += (s[i] === sx.data1[i%2] ? 1 : 0);
+            i += incr;
           }
-          while ((j - i) >= increment * 4) {
-            let s2 = '';
-            for (let l = 0; l < 4; l++) {
-              s2 += s[i + offset];
-              i += increment;
-            }
-            this.sxAdd(sx, parseInt(s2, 2).toString(16), pdm, true);
-           }
-          for (; i < j; i += increment) {
-            this.sxAdd(sx, s[i + offset], pdm, false);
-          }
-          // check 01 string
+          //debugv('psixx', s2, i, j);
+          this.sxAdd(sx, parseInt(s2, 2).toString(16), false, true);
+         }
+        for (; i < j; i += incr) {
+          //debugv('psixx', s[i], i, j);
+          this.sxAdd(sx, s[i] === sx.data1[i%2] ? 1 : 0, false, false);
         }
       }
       i = j;
       if (i <= iLast) {
-        i = iLast + 1;
+        i = iLast + incr;
       }
     }
     return sx.sx;
@@ -401,7 +422,7 @@ class PulseSpaceIndex {
     // based on trailing space / signal timeout detect repeated packages first/last may be partial
     //this.detectRepeatedPackages();
     this.detectPS01Values();
-    this.psx = this.psix(this.psi);
+    this.psx = this.psix(this.psi, this.l01t);
     //debug('psx', this.psix(this.psi));
     this.print();
   }

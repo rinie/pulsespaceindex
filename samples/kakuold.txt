@@ -493,3 +493,25 @@ PREVIOUS
 
 Philips RC6 on
 
+40000000000000000000000000000000004040
+
+35 2
+1 per 32
+
+  psi PulseSpaceIndex {
+  psi   signalType: 'broadlink:ook433',
+  psi   frameCount: 1,
+  psi   count: 886,
+  psi   micros: [ 305, 1310, 2589, 9227, 45680 ],
+  psi   counts: [
+  psi     { i: 0, t: 305, ct: [ 443, 215, 658 ], p: 0, s: 0 },
+  psi     { i: 1, t: 1310, ct: [ 0, 215, 215 ], s: 1 },
+  psi     { i: 2, t: 2589, ct: [ 0, 6, 6 ] },
+  psi     { i: 3, t: 9227, ct: [ 0, 6, 6 ] },
+  psi     { i: 4, t: 45680, ct: [ 0, 1, 1 ] }
+  psi   ],
+  psi   l01t: '--00-1-4',
+  
+Repeated signals broadlink:
+4 is BL timeout
+3 is inter packages space.
