@@ -152,14 +152,23 @@ class PulseSpaceIndex {
 
   print() { // uniform output format
     // console.log('tja', this);
-    const sep = ',';
-    if (this.micros !== null) {
-      console.log(this.count.toString(), sep, this.micros.length, sep, ...this.micros, sep, `'${this.psi}'`, sep, (this.signalType).toString().replace(/ /g, '_'));
-    } else {
-      console.log(this.count.toString(), sep, `'${this.psi}'`, sep, (this.signalType).toString().replace(/ /g, '_'));
+    const sep = ';';
+    const newOutputFormat = true;
+    if (newOutputFormat) {
+      if (this.micros !== null) {
+        console.log(this.count.toString(), this.micros.toString(),`'${this.psx}'`, (this.signalType).toString().replace(/ /g, '_'));
+      } else {
+        console.log(this.count.toString(), `'${this.psx}'`, (this.signalType).toString().replace(/ /g, '_'));
+      }
+    }
+    else {
+      if (this.micros !== null) {
+        console.log(this.count.toString(), sep, this.micros.length, sep, ...this.micros, sep, `'${this.psi}'`, sep, (this.signalType).toString().replace(/ /g, '_'));
+      } else {
+        console.log(this.count.toString(), sep, `'${this.psi}'`, sep, (this.signalType).toString().replace(/ /g, '_'));
+      }
     }
   }
-
 
   sxAdd(sx, data, constantMode = false, hexMode = false) {
     if (sx.constantMode !== constantMode) {
@@ -277,6 +286,113 @@ class PulseSpaceIndex {
     return sx.sx;
   }
 
+  tryManchester(s, ps01) {
+    const dataType = ((ps01[0] != ps01[2]) ? 'p' : '') + ((ps01[1] != ps01[3]) ? 's' : '');
+    const sx = {
+      sx: ps01 + ':',
+      hexMode: false,
+      constantMode: false,
+      data0: [ps01[0], ps01[1]],
+      data1: [ps01[2], ps01[3]],
+      dataType: dataType,
+      start: 0,
+      end: s.length
+    }
+
+    // ps both s + previous, p + next
+    // data both 01 (and) , leader/trailer at least one > 1
+    // alternate > 1 sections with <= 1 sections,
+    // <=1 sections always start with pulse, end with space...
+    let i = sx.start;
+    let j = i;
+    const len = sx.end;
+    if (ps01 != '0011') {
+      return;
+    }
+    debugv('tryManchester', ps01, sx);
+    while (i < len) {
+      let iLast = i;
+      let leader = ''; // pulse or pulse space
+      let data = '';
+      let datax = '';
+      let trailer = ''; // space
+      // Leader optional > 1 section
+      while ((j < len-1) && ((s[j] > 1) || (s[j+1] > 1))) {
+          leader += s[j++];  // pulse
+          leader += s[j++]; // space
+      }
+      if (j > i) {
+        // debugv('leader', leader, i, j);
+        this.sxAdd(sx, leader);
+        i = j;
+      }
+
+      let preambleLength = 0;
+      while ((j < len-1) && ((s[j] === '1'))) {
+            preambleLength++;
+            j++
+      }
+      let curValue = '0';
+      // data <= 1 section
+      let dataNibble = curValue;
+      while ((j < len-1) && ((s[j] <= '1'))) {
+        if (s[j] === '0') {
+            if (s[j+1] === '0') {
+              j++;
+            }
+            else { // no manchester
+              debugv('tryManchester no manchester', s[j+1], j, sx);
+              ;
+            }
+          }
+          else { // 1
+            curValue = (curValue === '0') ? '1' : '0';
+          }
+        dataNibble += curValue;
+        //debugv('dataNibble', dataNibble, j);
+        if (dataNibble.length >= 4) {
+          data += dataNibble;
+          datax += parseInt(dataNibble, 2).toString(16);
+          this.sxAdd(sx, parseInt(dataNibble, 2).toString(16), false, true);
+          dataNibble = '';
+        }
+        j++;
+      }
+      if (dataNibble.length > 0) {
+          data += dataNibble;
+          datax += '-' + dataNibble;
+          this.sxAdd(sx, dataNibble);
+      }
+      i = j;
+      // Trailer optional > 1 Space
+      if ((j < len-1) && ((s[j] <= sx.data1[psixPulse]) && (s[j+1] > sx.data1[psixSpace]))) {
+        trailer += s[j++];
+        trailer += s[j++];
+        this.sxAdd(sx, trailer);
+        if (leader.length > 0 ) {
+          debugv('tryManchester', dataType, 'leader', leader, 'preambleLength', preambleLength, 'datax', datax, 'trailer', trailer, data.length, iLast, j, data);
+        }
+        else {
+          debugv('tryManchester', dataType, 'preambleLength', preambleLength, 'datax', datax, 'trailer', trailer, data.length, iLast, j, data);
+        }
+      }
+      else {
+        if (leader.length > 0 ) {
+          debugv('tryManchester', dataType, 'leader', leader, 'preambleLength', preambleLength, 'datax', datax, data.length, iLast, j, data);
+        }
+        else {
+          debugv('tryManchester', dataType, 'preambleLength', preambleLength, 'datax', datax, data.length, iLast, j, data);
+        }
+      }
+      i = j;
+      if (i <= iLast) {
+        i = iLast + 2;
+      }
+      j = i;
+    }
+    return sx.sx;
+  }
+
   analyse() {
     const { psi } = this;
     this.countPulseSpace();
@@ -287,6 +403,9 @@ class PulseSpaceIndex {
     // based on trailing space / signal timeout detect repeated packages first/last may be partial
     //this.detectRepeatedPackages();
     this.detectPS01Values();
+    if (this.ps01 === '0011' && this.psi.length === 232) {
+      this.tryManchester(this.psi, this.ps01);
+    }
     this.psx = this.psix(this.psi, this.ps01);
     //debug('psx', this.psix(this.psi));
     this.print();
@@ -444,7 +563,7 @@ if (process.argv[2].toLowerCase().endsWith('.js')) { // js module
     const sample = samples.samples[j];
     debugv(sample);
     if (sample.psi !== undefined && sample.pulseLengths === undefined) { // broadlink samples
-      var psi = new PulseSpaceIndex(sample.psi, sample.micros, sample.frameCount, `broadlink:${sample.signalType}`);
+      var psi = new PulseSpaceIndex(sample.psi, sample.micros, sample.frameCount, `broadlink:${sample.signalType}:${sample.comment}`);
     } else if (sample.pulseLengths !== undefined) { // pimatic samples
       const brand = (sample.brands !== undefined) ? (`pimatic:${sample.brands}`).split(',', 1) : 'pimatic';
       var psi = new PulseSpaceIndex(sample.psi, sample.pulseLengths, 1, brand);
