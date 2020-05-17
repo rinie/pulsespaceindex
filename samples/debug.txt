@@ -1483,7 +1483,7 @@ psiv s datax 32ab532a-101 trailer 03 35 0 72 00110010101010110101001100101010101
 psiv s leader 02 datax 55a996a9955a9955 trailer 03 64 72 204 0101010110101001100101101010100110010101010110101001100101010101
 psiv s leader 02 datax 55a996a9955a9955 trailer 04 64 204 336 0101010110101001100101101010100110010101010110101001100101010101
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ook433',
+  signalType: 'broadlink:ook433:undefined',
   frameCount: 1,
   count: 336,
   micros: [ 335, 1340, 2680, 10232, 45680 ],
@@ -1528,7 +1528,7 @@ psiv s leader 02 datax 55a996a9955a9559 trailer 03 64 422 554 010101011010100110
 psiv s leader 02 datax 55a996a9955a9559 trailer 03 64 554 686 0101010110101001100101101010100110010101010110101001010101011001
 psiv s leader 02 datax 55a996a9955a9559 trailer 04 64 686 818 0101010110101001100101101010100110010101010110101001010101011001
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ook433',
+  signalType: 'broadlink:ook433:undefined',
   frameCount: 1,
   count: 818,
   micros: [ 305, 1340, 2710, 10293, 45680 ],
@@ -1567,20 +1567,20 @@ psiv {
   psi: '43000000000000000000000000010000000000000000000000010101010101010105420642064207',
   psx: '43 000400055550 542 0 642 0 642 0 7'
 }
-psiv psix 0001 {
-  sx: '0001:',
+psiv psix 0041 {
+  sx: '0041:',
   hexMode: false,
   constantMode: false,
   data0: [ '0', '0' ],
-  data1: [ '0', '1' ],
-  dataType: 's',
+  data1: [ '4', '1' ],
+  dataType: 'ps',
   start: 0,
   end: 80
 }
-psiv s leader 43 datax 000800ff trailer 05 32 0 68 00000000000010000000000011111111
-psiv s leader 420642064207 datax  0 68 80 
+psiv ps leader 43 datax 0000004000005555 trailer 05 64 0 68 0000000000000000000000000100000000000000000000000101010101010101
+psiv ps leader 420642064207 datax  0 68 80 
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ir',
+  signalType: 'broadlink:ir:undefined',
   frameCount: 1,
   count: 80,
   micros: [
@@ -1594,13 +1594,13 @@ psi PulseSpaceIndex {
     { i: 1, t: 1614, ct: [ 0, 9, 9 ], s: 1 },
     { i: 2, t: 2223, ct: [ 0, 3, 3 ] },
     { i: 3, t: 4324, ct: [ 0, 1, 1 ] },
-    { i: 4, t: 9045, ct: [ 4, 0, 4 ] },
+    { i: 4, t: 9045, ct: [ 4, 0, 4 ], p: 1 },
     { i: 5, t: 47386, ct: [ 0, 1, 1 ] },
     { i: 6, t: 95289, ct: [ 0, 2, 2 ] },
     { i: 7, t: 101502, ct: [ 0, 1, 1 ] }
   ],
-  ps01: '0001',
-  psx: '0001:43x000800ff-05420642064207',
+  ps01: '0041',
+  psx: '0041:43x0000004000005555-05420642064207',
   psi: '43000000000000000000000000010000000000000000000000010101010101010105420642064207',
   pi: '4000000000000000000000000000000000404040',
   si: '3000000000000100000000000111111115262627'
@@ -1627,20 +1627,20 @@ psiv {
   psi: '43000000000000000000000000010000000000000000000000010101010101010105420642064207',
   psx: '43 000400055550 542 0 642 0 642 0 7'
 }
-psiv psix 0001 {
-  sx: '0001:',
+psiv psix 0041 {
+  sx: '0041:',
   hexMode: false,
   constantMode: false,
   data0: [ '0', '0' ],
-  data1: [ '0', '1' ],
-  dataType: 's',
+  data1: [ '4', '1' ],
+  dataType: 'ps',
   start: 0,
   end: 80
 }
-psiv s leader 43 datax 000800ff trailer 05 32 0 68 00000000000010000000000011111111
-psiv s leader 420642064207 datax  0 68 80 
+psiv ps leader 43 datax 0000004000005555 trailer 05 64 0 68 0000000000000000000000000100000000000000000000000101010101010101
+psiv ps leader 420642064207 datax  0 68 80 
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ir',
+  signalType: 'broadlink:ir:undefined',
   frameCount: 1,
   count: 80,
   micros: [
@@ -1654,13 +1654,13 @@ psi PulseSpaceIndex {
     { i: 1, t: 1644, ct: [ 0, 9, 9 ], s: 1 },
     { i: 2, t: 2223, ct: [ 0, 3, 3 ] },
     { i: 3, t: 4416, ct: [ 0, 1, 1 ] },
-    { i: 4, t: 8984, ct: [ 4, 0, 4 ] },
+    { i: 4, t: 8984, ct: [ 4, 0, 4 ], p: 1 },
     { i: 5, t: 47386, ct: [ 0, 1, 1 ] },
     { i: 6, t: 95289, ct: [ 0, 2, 2 ] },
     { i: 7, t: 101502, ct: [ 0, 1, 1 ] }
   ],
-  ps01: '0001',
-  psx: '0001:43x000800ff-05420642064207',
+  ps01: '0041',
+  psx: '0041:43x0000004000005555-05420642064207',
   psi: '43000000000000000000000000010000000000000000000000010101010101010105420642064207',
   pi: '4000000000000000000000000000000000404040',
   si: '3000000000000100000000000111111115262627'
@@ -1687,20 +1687,20 @@ psiv {
   psi: '4300000000000000000000000001000000000000000000000001010101010101010542064207',
   psx: ' 43 000400055550 542 0 642 0 7'
 }
-psiv psix 0001 {
-  sx: '0001:',
+psiv psix 0041 {
+  sx: '0041:',
   hexMode: false,
   constantMode: false,
   data0: [ '0', '0' ],
-  data1: [ '0', '1' ],
-  dataType: 's',
+  data1: [ '4', '1' ],
+  dataType: 'ps',
   start: 0,
   end: 76
 }
-psiv s leader 43 datax 000800ff trailer 05 32 0 68 00000000000010000000000011111111
-psiv s leader 42064207 datax  0 68 76 
+psiv ps leader 43 datax 0000004000005555 trailer 05 64 0 68 0000000000000000000000000100000000000000000000000101010101010101
+psiv ps leader 42064207 datax  0 68 76 
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ir',
+  signalType: 'broadlink:ir:undefined',
   frameCount: 1,
   count: 76,
   micros: [
@@ -1714,13 +1714,13 @@ psi PulseSpaceIndex {
     { i: 1, t: 1644, ct: [ 0, 9, 9 ], s: 1 },
     { i: 2, t: 2193, ct: [ 0, 2, 2 ] },
     { i: 3, t: 4385, ct: [ 0, 1, 1 ] },
-    { i: 4, t: 8984, ct: [ 3, 0, 3 ] },
+    { i: 4, t: 8984, ct: [ 3, 0, 3 ], p: 1 },
     { i: 5, t: 47386, ct: [ 0, 1, 1 ] },
     { i: 6, t: 95289, ct: [ 0, 1, 1 ] },
     { i: 7, t: 101502, ct: [ 0, 1, 1 ] }
   ],
-  ps01: '0001',
-  psx: '0001:43x000800ff-0542064207',
+  ps01: '0041',
+  psx: '0041:43x0000004000005555-0542064207',
   psi: '4300000000000000000000000001000000000000000000000001010101010101010542064207',
   pi: '40000000000000000000000000000000004040',
   si: '30000000000001000000000001111111152627'
@@ -1747,20 +1747,20 @@ psiv {
   psi: '4300000000000000000000000001000000000000000000000001010101010101010542064207',
   psx: '43 000400055550 542 0 642 0 7'
 }
-psiv psix 0001 {
-  sx: '0001:',
+psiv psix 0041 {
+  sx: '0041:',
   hexMode: false,
   constantMode: false,
   data0: [ '0', '0' ],
-  data1: [ '0', '1' ],
-  dataType: 's',
+  data1: [ '4', '1' ],
+  dataType: 'ps',
   start: 0,
   end: 76
 }
-psiv s leader 43 datax 000800ff trailer 05 32 0 68 00000000000010000000000011111111
-psiv s leader 42064207 datax  0 68 76 
+psiv ps leader 43 datax 0000004000005555 trailer 05 64 0 68 0000000000000000000000000100000000000000000000000101010101010101
+psiv ps leader 42064207 datax  0 68 76 
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ir',
+  signalType: 'broadlink:ir:undefined',
   frameCount: 1,
   count: 76,
   micros: [
@@ -1774,13 +1774,13 @@ psi PulseSpaceIndex {
     { i: 1, t: 1675, ct: [ 0, 9, 9 ], s: 1 },
     { i: 2, t: 2223, ct: [ 0, 2, 2 ] },
     { i: 3, t: 4385, ct: [ 0, 1, 1 ] },
-    { i: 4, t: 8984, ct: [ 3, 0, 3 ] },
+    { i: 4, t: 8984, ct: [ 3, 0, 3 ], p: 1 },
     { i: 5, t: 47386, ct: [ 0, 1, 1 ] },
     { i: 6, t: 95289, ct: [ 0, 1, 1 ] },
     { i: 7, t: 101502, ct: [ 0, 1, 1 ] }
   ],
-  ps01: '0001',
-  psx: '0001:43x000800ff-0542064207',
+  ps01: '0041',
+  psx: '0041:43x0000004000005555-0542064207',
   psi: '4300000000000000000000000001000000000000000000000001010101010101010542064207',
   pi: '40000000000000000000000000000000004040',
   si: '30000000000001000000000001111111152627'
@@ -1820,7 +1820,7 @@ psiv psix 0001 {
 psiv s leader 43 datax 0008c03f trailer 05 32 0 68 00000000000010001100000000111111
 psiv s leader 4206 datax  0 68 72 
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ir',
+  signalType: 'broadlink:ir:undefined',
   frameCount: 1,
   count: 72,
   micros: [
@@ -1879,7 +1879,7 @@ psiv psix 0001 {
 psiv s leader 43 datax 000820df trailer 05 32 0 68 00000000000010000010000011011111
 psiv s leader 4206 datax  0 68 72 
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ir',
+  signalType: 'broadlink:ir:undefined',
   frameCount: 1,
   count: 72,
   micros: [
@@ -1938,7 +1938,7 @@ psiv psix 0001 {
 psiv s leader 43 datax 0008a05f trailer 05 32 0 68 00000000000010001010000001011111
 psiv s leader 4206 datax  0 68 72 
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ir',
+  signalType: 'broadlink:ir:undefined',
   frameCount: 1,
   count: 72,
   micros: [
@@ -1997,7 +1997,7 @@ psiv psix 0001 {
 psiv s leader 43 datax 0008a05f trailer 05 32 0 68 00000000000010001010000001011111
 psiv s leader 4206 datax  0 68 72 
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ir',
+  signalType: 'broadlink:ir:undefined',
   frameCount: 1,
   count: 72,
   micros: [
@@ -2046,7 +2046,7 @@ psiv ps leader 22 datax 0000024 trailer 04 28 8 40 0000000000000000000000100100
 psiv ps leader 31 datax 4-00 6 40 48 010000
 psiv ps leader 22 datax 0000024 trailer 05 28 48 80 0000000000000000000000100100
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ir',
+  signalType: 'broadlink:ir:undefined',
   frameCount: 1,
   count: 80,
   micros: [ 487, 914, 1370, 2649, 83656, 101502 ],
@@ -2088,7 +2088,7 @@ psiv ps leader 21 datax 418000000-00 trailer 13 38 0 42 010000011000000000000000
 psiv ps leader 21 datax 418000000-00 trailer 13 38 42 84 01000001100000000000000000000000000000
 psiv ps leader 21 datax 418000000-00 trailer 14 38 84 126 01000001100000000000000000000000000000
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ir',
+  signalType: 'broadlink:ir:undefined',
   frameCount: 1,
   count: 126,
   micros: [ 518, 944, 2710, 83686, 101502 ],
@@ -2130,7 +2130,7 @@ psiv ps leader 22 datax 0000003 trailer 04 28 8 40 0000000000000000000000000011
 psiv ps leader 31 datax 4-00 6 40 48 010000
 psiv ps leader 22 datax 0000003 trailer 05 28 48 80 0000000000000000000000000011
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ir',
+  signalType: 'broadlink:ir:undefined',
   frameCount: 1,
   count: 80,
   micros: [ 579, 944, 1462, 2741, 83595, 101502 ],
@@ -2170,7 +2170,7 @@ psiv psix 0011 {
 }
 psiv ps leader 21 datax 418000000-11 trailer 03 38 0 42 01000001100000000000000000000000000011
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ir',
+  signalType: 'broadlink:ir:undefined',
   frameCount: 1,
   count: 42,
   micros: [ 579, 944, 2710, 101502 ],
@@ -2223,7 +2223,7 @@ psiv ps leader 32 datax 0000002 trailer 05 28 8 40 0000000000000000000000000010
 psiv ps leader 41 datax 4-00 6 40 48 010000
 psiv ps leader 32 datax 0000002 trailer 06 28 48 80 0000000000000000000000000010
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ir',
+  signalType: 'broadlink:ir:undefined',
   frameCount: 1,
   count: 80,
   micros: [
@@ -2270,7 +2270,7 @@ psiv psix 0011 {
 psiv ps leader 21 datax 418000003-00 trailer 03 38 0 42 01000001100000000000000000000000001100
 psiv ps leader 21 datax 418000003-00 trailer 04 38 42 84 01000001100000000000000000000000001100
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ir',
+  signalType: 'broadlink:ir:undefined',
   frameCount: 1,
   count: 84,
   micros: [ 487, 914, 2649, 83656, 101502 ],
@@ -2312,7 +2312,7 @@ psiv ps leader 22 datax 000000-11 trailer 14 26 8 38 00000000000000000000000011
 psiv ps leader 31 datax 4-00 6 38 46 010000
 psiv ps leader 22 datax 000000-11 trailer 15 26 46 76 00000000000000000000000011
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ir',
+  signalType: 'broadlink:ir:undefined',
   frameCount: 1,
   count: 76,
   micros: [ 518, 944, 1370, 2710, 83595, 101502 ],
@@ -2353,7 +2353,7 @@ psiv psix 0011 {
 psiv ps leader 31 datax 418000002-01 trailer 04 38 0 42 01000001100000000000000000000000001001
 psiv ps leader 21 datax 418000002-01 trailer 05 38 42 84 01000001100000000000000000000000001001
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ir',
+  signalType: 'broadlink:ir:undefined',
   frameCount: 1,
   count: 84,
   micros: [ 548, 944, 2680, 2802, 83595, 101502 ],
@@ -2396,7 +2396,7 @@ psiv ps datax 565556555665 trailer 02 48 8 58 0101011001010101010101100101010101
 psiv ps datax 565556555665 trailer 02 48 58 108 010101100101010101010110010101010101011001100101
 psiv ps datax 565556555665 trailer 03 48 108 158 010101100101010101010110010101010101011001100101
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ook433',
+  signalType: 'broadlink:ook433:undefined',
   frameCount: 1,
   count: 158,
   micros: [ 396, 1096, 11055, 45680 ],
@@ -2436,7 +2436,7 @@ psiv ps datax 555665 trailer 02 24 0 26 010101010101011001100101
 psiv ps datax 565556555665 trailer 02 48 26 76 010101100101010101010110010101010101011001100101
 psiv ps datax 565556555665 trailer 03 48 76 126 010101100101010101010110010101010101011001100101
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ook433',
+  signalType: 'broadlink:ook433:undefined',
   frameCount: 1,
   count: 126,
   micros: [ 396, 1127, 11055, 45680 ],
@@ -2474,7 +2474,7 @@ psiv psix 0011 {
 }
 psiv ps datax 565556555665 trailer 02 48 0 50 010101100101010101010110010101010101011001100101
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ook433',
+  signalType: 'broadlink:ook433:undefined',
   frameCount: 11,
   count: 50,
   micros: [ 396, 1127, 11116 ],
@@ -2514,7 +2514,7 @@ psiv ps datax 565556555666 trailer 02 48 40 90 010101100101010101010110010101010
 psiv ps datax 565556555666 trailer 02 48 90 140 010101100101010101010110010101010101011001100110
 psiv ps datax 565556555666 trailer 03 48 140 190 010101100101010101010110010101010101011001100110
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ook433',
+  signalType: 'broadlink:ook433:undefined',
   frameCount: 1,
   count: 190,
   micros: [ 396, 1127, 11085, 45680 ],
@@ -2555,7 +2555,7 @@ psiv ps datax 565556555665 trailer 02 48 32 82 010101100101010101010110010101010
 psiv ps datax 565556555665 trailer 02 48 82 132 010101100101010101010110010101010101011001100101
 psiv ps datax 565556555665 trailer 03 48 132 182 010101100101010101010110010101010101011001100101
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ook433',
+  signalType: 'broadlink:ook433:undefined',
   frameCount: 1,
   count: 182,
   micros: [ 396, 1127, 11116, 45680 ],
@@ -2595,7 +2595,7 @@ psiv ps leader 21 datax 418000009-00 trailer 03 38 0 42 010000011000000000000000
 psiv ps leader 21 datax 418000009-00 trailer 03 38 42 84 01000001100000000000000000000000100100
 psiv ps leader 21 datax 418000009-00 trailer 04 38 84 126 01000001100000000000000000000000100100
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ir',
+  signalType: 'broadlink:ir:undefined',
   frameCount: 1,
   count: 126,
   micros: [ 487, 914, 2680, 83656, 101502 ],
@@ -2637,7 +2637,7 @@ psiv ps leader 22 datax 0000024 trailer 04 28 8 40 0000000000000000000000100100
 psiv ps leader 31 datax 4-00 6 40 48 010000
 psiv ps leader 22 datax 0000024 trailer 05 28 48 80 0000000000000000000000100100
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ir',
+  signalType: 'broadlink:ir:undefined',
   frameCount: 1,
   count: 80,
   micros: [ 457, 914, 1370, 2710, 83625, 101502 ],
@@ -2679,7 +2679,7 @@ psiv ps leader 21 datax 418000009-00 trailer 03 38 0 42 010000011000000000000000
 psiv ps leader 21 datax 418000009-00 trailer 03 38 42 84 01000001100000000000000000000000100100
 psiv ps leader 21 datax 418000009-00 trailer 04 38 84 126 01000001100000000000000000000000100100
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ir',
+  signalType: 'broadlink:ir:undefined',
   frameCount: 1,
   count: 126,
   micros: [ 518, 944, 2710, 83656, 101502 ],
@@ -2720,7 +2720,7 @@ psiv psix 0011 {
 psiv ps datax 6565999a56 trailer 02 40 0 42 0110010101100101100110011001101001010110
 psiv ps datax 55 8 42 50 01010101
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ook433',
+  signalType: 'broadlink:ook433:#banggood keyfob',
   frameCount: 19,
   count: 50,
   micros: [ 487, 1310, 12790 ],
@@ -2758,7 +2758,7 @@ psiv psix 0011 {
 psiv ps datax 56 trailer 02 8 0 10 01010110
 psiv ps datax 556565999a 40 10 50 0101010101100101011001011001100110011010
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ook433',
+  signalType: 'broadlink:ook433:undefined',
   frameCount: 15,
   count: 50,
   micros: [ 457, 1279, 12790 ],
@@ -2796,7 +2796,7 @@ psiv psix 0011 {
 psiv ps datax 5959666696-01 trailer 02 42 0 44 010110010101100101100110011001101001011001
 psiv ps datax 5-01 6 44 50 010101
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ook433',
+  signalType: 'broadlink:ook433:undefined',
   frameCount: 14,
   count: 50,
   micros: [ 457, 1279, 12790 ],
@@ -2834,7 +2834,7 @@ psiv psix 0011 {
 psiv ps datax 59666699-01 trailer 02 34 0 36 0101100101100110011001101001100101
 psiv ps datax 556-01 14 36 50 01010101011001
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ook433',
+  signalType: 'broadlink:ook433:undefined',
   frameCount: 16,
   count: 50,
   micros: [ 457, 1279, 12821 ],
@@ -2871,7 +2871,7 @@ psiv psix 0011 {
 }
 psiv ps datax 556565999a95 trailer 02 48 0 50 010101010110010101100101100110011001101010010101
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ook433',
+  signalType: 'broadlink:ook433:undefined',
   frameCount: 21,
   count: 50,
   micros: [ 457, 1279, 12790 ],
@@ -2914,7 +2914,7 @@ psiv s leader 02 datax 6aa99595999a9955 trailer 03 64 490 622 011010101010100110
 psiv s leader 02 datax 6aa99595999a9955 trailer 03 64 622 754 0110101010101001100101011001010110011001100110101001100101010101
 psiv s leader 02 datax 6aa99595999a9955 trailer 04 64 754 886 0110101010101001100101011001010110011001100110101001100101010101
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ook433',
+  signalType: 'broadlink:ook433:newkaku',
   frameCount: 1,
   count: 886,
   micros: [ 305, 1310, 2589, 9227, 45680 ],
@@ -2966,7 +2966,7 @@ psiv psix 0112 {
 psiv ps leader 0533 datax efaebafbabfffeaaaeeafbbf trailer 14 96 0 102 111011111010111010111010111110111010101111111111111111101010101010101110111010101111101110111111
 psiv ps leader 33 datax efaebafbabfffeaaaeeafbbf trailer 16 96 102 202 111011111010111010111010111110111010101111111111111111101010101010101110111010101111101110111111
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ir',
+  signalType: 'broadlink:ir:airo',
   frameCount: 0,
   count: 202,
   micros: [
@@ -3013,7 +3013,7 @@ psiv psix 0001 {
 psiv s leader 22 datax b24d1fe028d7 trailer 03 48 0 100 101100100100110100011111111000000010100011010111
 psiv s leader 22 datax b24d1fe028d7 trailer 04 48 100 200 101100100100110100011111111000000010100011010111
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ir',
+  signalType: 'broadlink:ir:Philips RC6',
   frameCount: 0,
   count: 200,
   micros: [ 640, 1584, 4446, 5147, 101502 ],
@@ -3052,7 +3052,7 @@ psiv psix 0123 {
 }
 psiv ps datax 999999999999-10 trailer 04 50 0 52 10011001100110011001100110011001100110011001100110
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ir',
+  signalType: 'broadlink:ir:Philips RC6',
   frameCount: 0,
   count: 52,
   micros: [ 640, 2254, 9075, 96477, 101502 ],
@@ -3104,7 +3104,7 @@ psiv psix 0001 {
 psiv s leader 43 datax 20df10ef trailer 05 32 0 68 00100000110111110001000011101111
 psiv s leader 4206 datax  0 68 72 
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ir',
+  signalType: 'broadlink:ir:LG Oled',
   frameCount: 0,
   count: 72,
   micros: [
@@ -3150,20 +3150,20 @@ psiv {
   ],
   psi: '4300000100000000000101000101010101000000010000000001010100010101010542064207'
 }
-psiv psix 0001 {
-  sx: '0001:',
+psiv psix 0041 {
+  sx: '0041:',
   hexMode: false,
   constantMode: false,
   data0: [ '0', '0' ],
-  data1: [ '0', '1' ],
-  dataType: 's',
+  data1: [ '4', '1' ],
+  dataType: 'ps',
   start: 0,
   end: 76
 }
-psiv s leader 43 datax 20df10ef trailer 05 32 0 68 00100000110111110001000011101111
-psiv s leader 42064207 datax  0 68 76 
+psiv ps leader 43 datax 0400515501005455 trailer 05 64 0 68 0000010000000000010100010101010100000001000000000101010001010101
+psiv ps leader 42064207 datax  0 68 76 
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ir',
+  signalType: 'broadlink:ir:LG Oled',
   frameCount: 0,
   count: 76,
   micros: [
@@ -3177,13 +3177,13 @@ psi PulseSpaceIndex {
     { i: 1, t: 1675, ct: [ 0, 16, 16 ], s: 1 },
     { i: 2, t: 2254, ct: [ 0, 2, 2 ] },
     { i: 3, t: 4416, ct: [ 0, 1, 1 ] },
-    { i: 4, t: 9075, ct: [ 3, 0, 3 ] },
+    { i: 4, t: 9075, ct: [ 3, 0, 3 ], p: 1 },
     { i: 5, t: 39955, ct: [ 0, 1, 1 ] },
     { i: 6, t: 96477, ct: [ 0, 1, 1 ] },
     { i: 7, t: 101502, ct: [ 0, 1, 1 ] }
   ],
-  ps01: '0001',
-  psx: '0001:43x20df10ef-0542064207',
+  ps01: '0041',
+  psx: '0041:43x0400515501005455-0542064207',
   psi: '4300000100000000000101000101010101000000010000000001010100010101010542064207',
   pi: '40000000000000000000000000000000004040',
   si: '30010000011011111000100001110111152627'
@@ -3223,7 +3223,7 @@ psiv psix 0001 {
 psiv s leader 43 datax 20df10ef trailer 05 32 0 68 00100000110111110001000011101111
 psiv s leader 4206 datax  0 68 72 
 psi PulseSpaceIndex {
-  signalType: 'broadlink:ir',
+  signalType: 'broadlink:ir:LG Oled',
   frameCount: 0,
   count: 72,
   micros: [
@@ -7196,6 +7196,19 @@ psi PulseSpaceIndex {
   si: '0000001010111011101010112'
 }
 psim microsToPsi  pilight:orsv2 929 918 1168 810 982 951 989 947 1004 972 996 950 997 945 998 953 995 967 987 966 990 971 978 983 965 968 994 984 976 965 980 969 980 509 454 1010 479 471 1018 467 476 1000 470 487 994 967 992 495 475 1000 943 1014 920 1030 460 498 993 469 463 1031 478 464 995 967 967 516 434 1054 446 490 972 532 414 1039 930 1028 908 1042 945 1022 902 1051 911 1035 902 1046 955 1006 436 509 962 530 419 1060 427 525 939 560 396 1048 1383 707 313 503 956 995 974 1018 915 537 411 1068 408 531 957 511 435 1064 880 1052 941 1030 429 534 932 1002 956 541 424 1044 892 1064 918 1030 431 521 944 1008 963 519 428 1061 894 1045 920 1035 430 517 951 551 415 1052 885 1058 907 1052 883 1075 926 1031 883 1056 910 1046 909 1047 891 1067 420 537 942 517 424 1059 907 1048 426 517 954 545 403 1083 865 1062 910 1047 424 527 945 545 434 1033 906 1061 412 522 946 1008 946 545 405 1067 888 1068 886 1070 405 533 957 528 444 1035 891 1054 901 1059 876 1067 438 540 937 519 421 1061 903 1073 866 1071 438 504 963 11018
+psiv tryManchester 0011 {
+  sx: '0011:',
+  hexMode: false,
+  constantMode: false,
+  data0: [ '0', '0' ],
+  data1: [ '1', '1' ],
+  dataType: 'ps',
+  start: 0,
+  end: 232
+}
+psiv tryManchester ps preambleLength 33 datax 334acd32aaacc-1 53 0 100 00110011010010101100110100110010101010101010110011001
+psiv tryManchester ps leader 21 preambleLength 0 datax 2b352d4b53555534d4d2d4d535-001 107 100 231 00101011001101010010110101001011010100110101010101010101001101001101010011010010110101001101010100110101001
+psiv tryManchester ps preambleLength 0 datax -0 1 231 231 0
 psiv psix 0011 {
   sx: '0011:',
   hexMode: false,
@@ -7648,6 +7661,18 @@ psi PulseSpaceIndex {
 }
 psiv Rflink Domoticzlog  RFLink: 20;E1;fixPulseNewKaku;ID=01fa22ae;SWITCH=0;CMD=ALLOFF;
 psim microsToPsi  rflink:RFLink: 20;2B;DEBUG;Pulses=232;Pulses(uSec)=960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,480,480,960,480,480,960,480,480,960,480,480,960,480,480,960,480,480,960,480,480,960,960,960,480,480,960,480,480,960,480,480,960,960,960,960,960,480,480,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,480,480,960,480,480,960,480,480,960,480,480,960,480,480,960,960,960,960,960,480,480,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,480,480,960,960,960,960,960,480,480,960,960,960,960,960,960,960,480,480,960,960,960,480,480,960,960,960,480,480,960,480,480,960,960,960,480,480,960,480,480,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,480,480,960,960,960,960,960,480,480,960,960,960,960,960,960,960,960,960,480,480,960,480,480,960,480,480,960,960,960,960,960,6990;
+psiv tryManchester 0011 {
+  sx: '0011:',
+  hexMode: false,
+  constantMode: false,
+  data0: [ '0', '0' ],
+  data1: [ '1', '1' ],
+  dataType: 'ps',
+  start: 0,
+  end: 232
+}
+psiv tryManchester ps preambleLength 33 datax 3332cd4aaaaaccd4aaaaaaaad4ab4b2caaab52ab35-0 169 0 231 0011001100110010110011010100101010101010101010101100110011010100101010101010101010101010101010101101010010101011010010110010110010101010101010110101001010101011001101010
+psiv tryManchester ps preambleLength 0 datax -0 1 231 231 0
 psiv psix 0011 {
   sx: '0011:',
   hexMode: false,
@@ -8561,4 +8586,60 @@ psi PulseSpaceIndex {
   si: '1110111110111111111010102'
 }
 psiv Rflink Domoticzlog  2020-04-26 09:21:20.279 RFLink: 20;89;Kaku;ID=43;SWITCH=2;CMD=ON;
+psim microsToPsi  rflink:20;81;DEBUG;Pulses=138;Pulses(uSec)=0,1680,840,930,840,930,840,930,840,930,870,930,840,930,840,930,840,930,840,930,840,930,870,930,840,930,840,930,840,930,840,930,840,450,300,960,360,420,840,420,330,930,360,420,840,420,330,930,330,420,840,420,330,930,810,930,330,420,870,390,330,960,360,390,870,930,840,900,870,420,330,930,810,930,840,930,810,960,810,930,840,930,840,930,810,930,840,930,840,930,840,930,330,420,870,870,900,870,870,900,900,420,300,930,840,930,840,930,840,930,810,930,840,930,840,930,360,390,900,390,360,900,840,900,870,900,870,900,390,360,930,330,420,840,480,270,1050,90;
+psiv psix 0011 {
+  sx: '0011:',
+  hexMode: false,
+  constantMode: false,
+  data0: [ '0', '0' ],
+  data1: [ '1', '1' ],
+  dataType: 'ps',
+  start: 0,
+  end: 138
+}
+psiv ps leader 02 datax fffffffe49249c93e7ffffcfe7ffc9fc92 136 0 138 1111111111111111111111111111111001001001001001001001110010010011111001111111111111111111110011111110011111111111110010011111110010010010
+psi PulseSpaceIndex {
+  signalType: 'rflink:98',
+  frameCount: 1,
+  count: 138,
+  micros: [ 358, 887, 1680 ],
+  counts: [
+    { i: 0, t: 358, ct: [ 19, 19, 38 ], p: 0, s: 0 },
+    { i: 1, t: 887, ct: [ 50, 49, 99 ], p: 1, s: 1 },
+    { i: 2, t: 1680, ct: [ 0, 1, 1 ] }
+  ],
+  ps01: '0011',
+  psx: '0011:02xfffffffe49249c93e7ffffcfe7ffc9fc92',
+  psi: '021111111111111111111111111111111001001001001001001001110010010011111001111111111111111111110011111110011111111111110010011111110010010010',
+  pi: '011111111111111110010010010101001110111111111101111011111101011101001',
+  si: '211111111111111101001001001100101101111111111101110111111100111100100'
+}
+psim microsToPsi  rflink:2020-05-06 15:10:05.215 RFLink: 20;83;DEBUG;Pulses=138;Pulses(uSec)=0,1680,840,930,840,930,840,930,840,930,870,930,810,930,840,930,840,930,810,930,810,930,870,930,840,930,840,930,840,930,840,930,840,450,300,960,360,420,840,420,330,930,360,420,840,420,330,930,360,420,840,450,330,930,840,930,330,420,870,390,330,930,360,390,870,900,840,900,870,420,330,930,780,930,840,930,810,930,840,930,840,930,840,930,810,930,840,930,840,930,840,930,330,420,870,840,900,870,900,900,870,420,330,930,840,930,840,930,840,930,810,930,840,930,840,930,360,360,900,390,360,930,840,900,870,900,870,900,390,360,930,330,420,840,480,300,1050,120;
+psiv psix 0011 {
+  sx: '0011:',
+  hexMode: false,
+  constantMode: false,
+  data0: [ '0', '0' ],
+  data1: [ '1', '1' ],
+  dataType: 'ps',
+  start: 0,
+  end: 138
+}
+psiv ps leader 02 datax fffffffe49249c93e7ffffcfe7ffc9fc92 136 0 138 1111111111111111111111111111111001001001001001001001110010010011111001111111111111111111110011111110011111111111110010011111110010010010
+psi PulseSpaceIndex {
+  signalType: 'rflink:99',
+  frameCount: 1,
+  count: 138,
+  micros: [ 360, 887, 1680 ],
+  counts: [
+    { i: 0, t: 360, ct: [ 19, 19, 38 ], p: 0, s: 0 },
+    { i: 1, t: 887, ct: [ 50, 49, 99 ], p: 1, s: 1 },
+    { i: 2, t: 1680, ct: [ 0, 1, 1 ] }
+  ],
+  ps01: '0011',
+  psx: '0011:02xfffffffe49249c93e7ffffcfe7ffc9fc92',
+  psi: '021111111111111111111111111111111001001001001001001001110010010011111001111111111111111111110011111110011111111111110010011111110010010010',
+  pi: '011111111111111110010010010101001110111111111101111011111101011101001',
+  si: '211111111111111101001001001100101101111111111101110111111100111100100'
+}
 'pulsespaceindex.js testend' 

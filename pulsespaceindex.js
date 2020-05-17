@@ -8,13 +8,17 @@
 // OOK On Off Keying: Pulse is signal, Space is no signal...
 const debug = require('debug')('psi');
 const debugv = require('debug')('psiv');
-const debugm = require('debug')('psim');
+
+const debugm = require('debug')('psim');
 const readline = require('readline');
 const fs = require('fs');
 
 const psixPulse = 0;
 const psixSpace = 1;
 const psixPulseSpace = 2; // fix with ES6 enums but...
+const ps01f0 = 0;
+const ps01f1 = 2;
+const ps01fFrameHT = 4;
 
 class PulseSpaceIndex {
   constructor(psi, micros = null, frameCount = 1, signalType = 'ook433') {
@@ -23,11 +27,11 @@ class PulseSpaceIndex {
     this.count = (psi !== null) ? psi.length : null;
     this.micros = micros;
     this.counts = null; // filled by analyse
-    this.ps01 = '0000'; // filled by detectPS01Values: minimal ps is p01s01, s is p0s01 or p00s01... s12 is p0s12...
+    this.ps01f = '000000'; // filled by detectPS01Values: minimal ps is p01s01, s is p0s01 or p00s01... s12 is p0s12...
     this.psx = null;
     this.psi = psi; // Pulse Space Index
     this.pi = null; // Pulse Index
-    this.si = null; //Space Index
+    this.si = null; // Space Index
   }
 
   countPulseSpace() {
@@ -37,22 +41,21 @@ class PulseSpaceIndex {
     const counts = [];
     if (this.micros !== null) {
       for (let i = 0; i < this.micros.length; i++) {
-        counts[i] = { i:i, t: this.micros[i], ct: [0, 0, 0] };
+        counts[i] = { i, t: this.micros[i], ct: [0, 0, 0] };
       }
-    }
-    else {
-      for (let i = 0; i < psi.length - 1; i ++) {
+    } else {
+      for (let i = 0; i < psi.length - 1; i++) {
         const psii = parseInt(psi[i], 16);
         if (typeof counts[psii] === 'undefined') {
           counts[psii] = { i: psii, t: null, ct: [0, 0, 0] }; // i: pssii or psi[i]?
-         }
+        }
       }
       // fill blanks
       for (let i = 0; i < counts.length; i++) {
         if (typeof counts[i] === 'undefined') {
-          counts[i] = { i: i, t: null, ct: [0, 0, 0] };
-         }
-       }
+          counts[i] = { i, t: null, ct: [0, 0, 0] };
+        }
+      }
     }
     for (let i = 0; i < psi.length - 1; i += 2) {
       // pulse 0,2,4...
@@ -97,57 +100,131 @@ class PulseSpaceIndex {
   // denoted as data pulse 0, data pulse 1, data space 0 and data space 1
   // todo: PPM/PDM is single P, only (data) spaces have 2 values
   //
+  // 2020 resolution:
+  //  At least 2 data values (0101) but maybe 3 or 4
+  //  Depending on the FrameCount data 1 may be a header or trailer value
+  //  Assume optional partial start frame, 1 or more full frames, optional partial end frame...
+  //  First pulse of a frame is often longer and last space of a frame is (always) longer.
+  //  Use this to determine framelength Header/Data/Trailer with maximum one strange Pulse/Space inside the data
+  //  So use the length between the 'non data pulses/spaces' as an indication of framecount and data versus header/trailer.
+  //
   detectPS01Values() {
     const { psi } = this;
-    const counts = this.counts;
+    const { counts } = this;
     // now check dominating pulse and space counts
     // max counts pulse and space counts
     const maxDomCounts = 2;
     // convert to string '01'...
-    // ps01 0011
-    let ps01 = [0,0,0,0];
-    let min01ValuesCount = 1; // max one start/one stop sync? was 3
-    const maxI = (counts.length < 4) ? counts.length : 4;
+    // ps01f 0011
+    const ps01f = [0, 0, 0, 0, 0, 0];
+    const min01ValuesCount = 1; // max one start/one stop sync? was 3
+
+    // 2020: 0 value is ok but 1 value may be header/trailer
+    // take 2 values with highest count
+    // max distance will determine if 1 is data or not
+    const maxI = counts.length;
     for (let i = 1; i < maxI; i++) {
-        if (i > 1 && this.count > 32) {
-          min01ValuesCount = Math.round(this.count/32); // todo max this % of packages length
-        }
-        for (let psix = 0; psix < psixPulseSpace; psix++) {
-          let ct = counts[i].ct[psix];
-          if (ct > min01ValuesCount) {
-            let ct0 = counts[ps01[psix + 0]].ct[psix];
-            let ct1 = counts[ps01[psix + 2]].ct[psix];
-            //debugv(ps01, psix, ct, ct0, ct1, i, psix+2);
-            if (ct >= ct1 || ct >= ct0 || ps01[psix + 0] === ps01[psix + 2]) {
-              ps01[psix + 0] = ps01[psix + 2];
-              ps01[psix + 2] = i;
-            }
+      // if (i > 1 && this.count > 32) {
+      //  min01ValuesCount = Math.round(this.count/32); // todo max this % of packages length
+      // }
+      for (let psix = 0; psix < psixPulseSpace; psix++) {
+        const ct = counts[i].ct[psix];
+        if (ct > min01ValuesCount) {
+          const ct0 = counts[ps01f[ps01f0 + psix]].ct[psix];
+          const ct1 = counts[ps01f[ps01f1 + psix]].ct[psix];
+          // debugv(ps01f, psix, ct, ct0, ct1, i, psix+2);
+          if (ct > ct1 || ct > ct0 || ps01f[ps01f0 + psix] === ps01f[ps01f1 + psix]) {
+            ps01f[ps01f0 + psix] = ps01f[ps01f1 + psix];
+            ps01f[ps01f1 + psix] = i;
           }
         }
+      }
     }
-    //debugv(ps01);
 
     // check 0 values
-    // pulse [0] and [2]
-    if (counts[ps01[0]].ct[psixPulse] === 0) {
-      ps01[0] = ps01[2];
+    if (counts[ps01f[ps01f0 + psixPulse]].ct[psixPulse] === 0) {
+      ps01f[ps01f0 + psixPulse] = ps01f[ps01f1 + psixPulse];
     }
-    counts[ps01[0]].p = 0;
-    if (ps01[0] !== ps01[2]) {
-      counts[ps01[2]].p = 1;
+    if (counts[ps01f[ps01f0 + psixSpace]].ct[psixSpace] === 0) {
+      ps01f[ps01f0 + psixSpace] = ps01f[ps01f1 + psixSpace];
+    }
+    // ranges Always: ..0, Often ..1, Seldom: midSync (HeaderTrailer) , Trailer always (but discarded by may programs), Header often header/Trailer pulse/space
+    // complicated by 'first incomplete/last incomplete...'
+    // extend ps01f with ht as first header/trailer index
+    // Use this to determine split values 0, 1, HT. Gap between 1 and HT may be midsync. 0=1 no diff...
+    // so 0<=Max0 <=Max01 < MinHT<=counts.length, HT becomes F for frame Header/Trailer or separator..
+    // Start with maxPulse and space >= maxPulse...
+    for (let i = counts.length - 1; i > ps01f[ps01f0 + psixPulse]; --i) {
+      if ((i > ps01f[ps01f0 + psixSpace]) && (counts[i].ct[psixSpace] > 0)) {
+        ps01f[ps01fFrameHT + psixSpace] = i;
+      }
+      if (counts[i].ct[psixPulse] > 0) {
+        ps01f[ps01fFrameHT + psixPulse] = i;
+        if (ps01f[ps01fFrameHT + psixSpace] === 0) {
+          ps01f[ps01fFrameHT + psixSpace] = i;
+        }
+        break;
+      }
+    }
+    // ps01fFrameHT now has potential Header pulse and Trailer Space
+    // examine signal from start to finish
+    // Stop on Header pulse and Trailer Space
+    // Trailer Space: Next header pulse or header space?
+    // Header pulse: next header space?
+// todo
+
+    // Header (optional): pulse and/or space
+    // Trailer (no signal) pulse only.
+    //  Repeated frame: Trailer followed by Header if any.
+    // So HT is used to find frame boundaries TsHpHs...
+    // Trailer Space >= Header Pulse
+    // Header Space ?
+    // Header first or space before header is trailer
+    // Trailer: last or incomplete package?
+    // frames or slices?
+    // max distance
+
+    // get some feeling for distances between FrameHT... counts.length
+    let i = ((ps01f[ps01fFrameHT + psixPulse] <= ps01f[ps01fFrameHT + psixSpace])
+      ? ps01f[ps01fFrameHT + psixPulse]
+      : ps01f[ps01fFrameHT + psixSpace]);
+
+    for (; i < counts.length; i++) {
+      const maxDx = [0, 0, 0];
+      const s = this.psi;
+      for (let j = 0; j < s.length; j++) {
+        const dx = [0, 0, 0];
+        for (;s[j] < i; j++) {
+          if ((!(j & 1)) && (counts[i].ct[psixPulse] > 0)) {
+            dx[psixPulse]++;
+          } else if (counts[i].ct[psixSpace] > 0) {
+            dx[psixSpace]++;
+          }
+          dx[psixPulseSpace]++;
+        }
+        for (let psix = 0; psix < psixPulseSpace + 1; psix++) {
+          if (dx[psix] > maxDx[psix]) {
+            maxDx[psix] = dx[psix];
+          }
+        }
+      }
+      counts[i].dx = maxDx;
+    }
+
+    // pulse [0] and [2]
+    counts[ps01f[ps01f0 + psixPulse]].p = 0;
+    if (ps01f[ps01f0 + psixPulse] !== ps01f[ps01f1 + psixPulse]) {
+      counts[ps01f[ps01f1 + psixPulse]].p = 1;
     }
 
     // space [1] and [3]
-    if (counts[ps01[1]].ct[psixSpace] === 0) {
-      ps01[1] = ps01[3];
-    }
-    counts[ps01[1]].s = 0;
-    if (ps01[1] !== ps01[3]) {
-      counts[ps01[3]].s = 1;
+    counts[ps01f[ps01f0 + psixSpace]].s = 0;
+    if (ps01f[ps01f0 + psixSpace] !== ps01f[ps01f1 + psixSpace]) {
+      counts[ps01f[ps01f1 + psixSpace]].s = 1;
     }
 
     this.counts = counts;
-    this.ps01 = ps01.join('');
+    this.ps01f = ps01f.join('');
   }
 
   print() { // uniform output format
@@ -156,17 +233,14 @@ class PulseSpaceIndex {
     const newOutputFormat = true;
     if (newOutputFormat) {
       if (this.micros !== null) {
-        console.log(this.count.toString(), this.micros.toString(),`'${this.psx}'`, (this.signalType).toString().replace(/ /g, '_'));
+        console.log(this.count.toString(), this.micros.toString(), `'${this.psx}'`, (this.signalType).toString().replace(/ /g, '_'));
       } else {
         console.log(this.count.toString(), `'${this.psx}'`, (this.signalType).toString().replace(/ /g, '_'));
       }
-    }
-    else {
-      if (this.micros !== null) {
-        console.log(this.count.toString(), sep, this.micros.length, sep, ...this.micros, sep, `'${this.psi}'`, sep, (this.signalType).toString().replace(/ /g, '_'));
-      } else {
-        console.log(this.count.toString(), sep, `'${this.psi}'`, sep, (this.signalType).toString().replace(/ /g, '_'));
-      }
+    } else if (this.micros !== null) {
+      console.log(this.count.toString(), sep, this.micros.length, sep, ...this.micros, sep, `'${this.psi}'`, sep, (this.signalType).toString().replace(/ /g, '_'));
+    } else {
+      console.log(this.count.toString(), sep, `'${this.psi}'`, sep, (this.signalType).toString().replace(/ /g, '_'));
     }
   }
 
@@ -191,18 +265,18 @@ class PulseSpaceIndex {
    * todo: Manchester/Biphase
    * todo: Header/Leader data Trailer/Pause. Longer signal or repeated 1s
    */
-  psix(s, ps01) {
-    const dataType = ((ps01[0] != ps01[2]) ? 'p' : '') + ((ps01[1] != ps01[3]) ? 's' : '');
+  psix(s, ps01f) {
+    const dataType = ((ps01f[0] != ps01f[2]) ? 'p' : '') + ((ps01f[1] != ps01f[3]) ? 's' : '');
     const sx = {
-      sx: ps01 + ':',
+      sx: `${ps01f}:`,
       hexMode: false,
       constantMode: false,
-      data0: [ps01[0], ps01[1]],
-      data1: [ps01[2], ps01[3]],
-      dataType: dataType,
+      data0: [ps01f[0], ps01f[1]],
+      data1: [ps01f[2], ps01f[3]],
+      dataType,
       start: 0,
-      end: s.length
-    }
+      end: s.length,
+    };
 
     // ps both s + previous, p + next
     // data both 01 (and) , leader/trailer at least one > 1
@@ -211,17 +285,17 @@ class PulseSpaceIndex {
     let i = sx.start;
     let j = i;
     const len = sx.end;
-    debugv('psix', ps01, sx);
+    debugv('psix', ps01f, sx);
     while (i < len) {
-      let iLast = i;
+      const iLast = i;
       let leader = ''; // pulse or pulse space
       let data = '';
       let datax = '';
       let trailer = ''; // space
       // Leader optional > 1 section
-      while ((j < len-1) && ((s[j] > sx.data1[psixPulse]) || (s[j+1] > sx.data1[psixSpace]))) {
-          leader += s[j++];  // pulse
-          leader += s[j++]; // space
+      while ((j < len - 1) && ((s[j] > sx.data1[psixPulse]) || (s[j + 1] > sx.data1[psixSpace]))) {
+        leader += s[j++]; // pulse
+        leader += s[j++]; // space
       }
       if (j > i) {
         // debugv('leader', leader, i, j);
@@ -231,51 +305,44 @@ class PulseSpaceIndex {
 
       // data <= 1 section
       let dataNibble = '';
-      while ((j < len-1) && ((s[j] <= sx.data1[psixPulse]) && (s[j+1] <= sx.data1[psixSpace]))) {
+      while ((j < len - 1) && ((s[j] <= sx.data1[psixPulse]) && (s[j + 1] <= sx.data1[psixSpace]))) {
         if (dataType === 'ps') {
-            dataNibble += (s[j+0] === sx.data0[psixPulse]) ? '0' : '1';
-            dataNibble += (s[j+1] === sx.data0[psixSpace]) ? '0' : '1';
+          dataNibble += (s[j + 0] === sx.data0[psixPulse]) ? '0' : '1';
+          dataNibble += (s[j + 1] === sx.data0[psixSpace]) ? '0' : '1';
+        } else if (dataType === 'p') {
+          dataNibble += (s[j + 0] === sx.data0[psixPulse]) ? '0' : '1';
+        } else { // 's'
+          dataNibble += (s[j + 1] === sx.data0[psixSpace]) ? '0' : '1';
         }
-        else if (dataType === 'p') {
-            dataNibble += (s[j+0] === sx.data0[psixPulse]) ? '0' : '1';
-        }
-        else { // 's'
-            dataNibble += (s[j+1] === sx.data0[psixSpace]) ? '0' : '1';
-        }
-        //debugv('dataNibble', dataNibble, j);
+        // debugv('dataNibble', dataNibble, j);
         if (dataNibble.length >= 4) {
           data += dataNibble;
           datax += parseInt(dataNibble, 2).toString(16);
           this.sxAdd(sx, parseInt(dataNibble, 2).toString(16), false, true);
           dataNibble = '';
         }
-        j+= 2;
+        j += 2;
       }
       if (dataNibble.length > 0) {
-          data += dataNibble;
-          datax += '-' + dataNibble;
-          this.sxAdd(sx, dataNibble);
+        data += dataNibble;
+        datax += `-${dataNibble}`;
+        this.sxAdd(sx, dataNibble);
       }
       i = j;
       // Trailer optional > 1 Space
-      if ((j < len-1) && ((s[j] <= sx.data1[psixPulse]) && (s[j+1] > sx.data1[psixSpace]))) {
+      if ((j < len - 1) && ((s[j] <= sx.data1[psixPulse]) && (s[j + 1] > sx.data1[psixSpace]))) {
         trailer += s[j++];
         trailer += s[j++];
         this.sxAdd(sx, trailer);
-        if (leader.length > 0 ) {
+        if (leader.length > 0) {
           debugv(dataType, 'leader', leader, 'datax', datax, 'trailer', trailer, data.length, iLast, j, data);
-        }
-        else {
+        } else {
           debugv(dataType, 'datax', datax, 'trailer', trailer, data.length, iLast, j, data);
         }
-      }
-      else {
-        if (leader.length > 0 ) {
-          debugv(dataType, 'leader', leader, 'datax', datax, data.length, iLast, j, data);
-        }
-        else {
-          debugv(dataType, 'datax', datax, data.length, iLast, j, data);
-        }
+      } else if (leader.length > 0) {
+        debugv(dataType, 'leader', leader, 'datax', datax, data.length, iLast, j, data);
+      } else {
+        debugv(dataType, 'datax', datax, data.length, iLast, j, data);
       }
       i = j;
       if (i <= iLast) {
@@ -286,18 +353,18 @@ class PulseSpaceIndex {
     return sx.sx;
   }
 
-  tryManchester(s, ps01) {
-    const dataType = ((ps01[0] != ps01[2]) ? 'p' : '') + ((ps01[1] != ps01[3]) ? 's' : '');
+  tryManchester(s, ps01f) {
+    const dataType = ((ps01f[0] != ps01f[2]) ? 'p' : '') + ((ps01f[1] != ps01f[3]) ? 's' : '');
     const sx = {
-      sx: ps01 + ':',
+      sx: `${ps01f}:`,
       hexMode: false,
       constantMode: false,
-      data0: [ps01[0], ps01[1]],
-      data1: [ps01[2], ps01[3]],
-      dataType: dataType,
+      data0: [ps01f[0], ps01f[1]],
+      data1: [ps01f[2], ps01f[3]],
+      dataType,
       start: 0,
-      end: s.length
-    }
+      end: s.length,
+    };
 
     // ps both s + previous, p + next
     // data both 01 (and) , leader/trailer at least one > 1
@@ -306,20 +373,20 @@ class PulseSpaceIndex {
     let i = sx.start;
     let j = i;
     const len = sx.end;
-    if (ps01 != '0011') {
+    if (ps01f != '0011') {
       return;
     }
-    debugv('tryManchester', ps01, sx);
+    debugv('tryManchester', ps01f, sx);
     while (i < len) {
-      let iLast = i;
+      const iLast = i;
       let leader = ''; // pulse or pulse space
       let data = '';
       let datax = '';
       let trailer = ''; // space
       // Leader optional > 1 section
-      while ((j < len-1) && ((s[j] > 1) || (s[j+1] > 1))) {
-          leader += s[j++];  // pulse
-          leader += s[j++]; // space
+      while ((j < len - 1) && ((s[j] > 1) || (s[j + 1] > 1))) {
+        leader += s[j++]; // pulse
+        leader += s[j++]; // space
       }
       if (j > i) {
         // debugv('leader', leader, i, j);
@@ -328,28 +395,25 @@ class PulseSpaceIndex {
       }
 
       let preambleLength = 0;
-      while ((j < len-1) && ((s[j] === '1'))) {
-            preambleLength++;
-            j++
+      while ((j < len - 1) && ((s[j] === '1'))) {
+        preambleLength++;
+        j++;
       }
       let curValue = '0';
       // data <= 1 section
       let dataNibble = curValue;
-      while ((j < len-1) && ((s[j] <= '1'))) {
+      while ((j < len - 1) && ((s[j] <= '1'))) {
         if (s[j] === '0') {
-            if (s[j+1] === '0') {
-              j++;
-            }
-            else { // no manchester
-              debugv('tryManchester no manchester', s[j+1], j, sx);
-              ;
-            }
+          if (s[j + 1] === '0') {
+            j++;
+          } else { // no manchester
+            debugv('tryManchester no manchester', s[j + 1], j, sx);
           }
-          else { // 1
-            curValue = (curValue === '0') ? '1' : '0';
-          }
+        } else { // 1
+          curValue = (curValue === '0') ? '1' : '0';
+        }
         dataNibble += curValue;
-        //debugv('dataNibble', dataNibble, j);
+        // debugv('dataNibble', dataNibble, j);
         if (dataNibble.length >= 4) {
           data += dataNibble;
           datax += parseInt(dataNibble, 2).toString(16);
@@ -359,30 +423,25 @@ class PulseSpaceIndex {
         j++;
       }
       if (dataNibble.length > 0) {
-          data += dataNibble;
-          datax += '-' + dataNibble;
-          this.sxAdd(sx, dataNibble);
+        data += dataNibble;
+        datax += `-${dataNibble}`;
+        this.sxAdd(sx, dataNibble);
       }
       i = j;
       // Trailer optional > 1 Space
-      if ((j < len-1) && ((s[j] <= sx.data1[psixPulse]) && (s[j+1] > sx.data1[psixSpace]))) {
+      if ((j < len - 1) && ((s[j] <= sx.data1[psixPulse]) && (s[j + 1] > sx.data1[psixSpace]))) {
         trailer += s[j++];
         trailer += s[j++];
         this.sxAdd(sx, trailer);
-        if (leader.length > 0 ) {
+        if (leader.length > 0) {
           debugv('tryManchester', dataType, 'leader', leader, 'preambleLength', preambleLength, 'datax', datax, 'trailer', trailer, data.length, iLast, j, data);
-        }
-        else {
+        } else {
           debugv('tryManchester', dataType, 'preambleLength', preambleLength, 'datax', datax, 'trailer', trailer, data.length, iLast, j, data);
         }
-      }
-      else {
-        if (leader.length > 0 ) {
-          debugv('tryManchester', dataType, 'leader', leader, 'preambleLength', preambleLength, 'datax', datax, data.length, iLast, j, data);
-        }
-        else {
-          debugv('tryManchester', dataType, 'preambleLength', preambleLength, 'datax', datax, data.length, iLast, j, data);
-        }
+      } else if (leader.length > 0) {
+        debugv('tryManchester', dataType, 'leader', leader, 'preambleLength', preambleLength, 'datax', datax, data.length, iLast, j, data);
+      } else {
+        debugv('tryManchester', dataType, 'preambleLength', preambleLength, 'datax', datax, data.length, iLast, j, data);
       }
       i = j;
       if (i <= iLast) {
@@ -401,13 +460,13 @@ class PulseSpaceIndex {
     // pi: '031111111111111...' then becomes pi: '020000000000000
     // todo this.fixFirstPulse();
     // based on trailing space / signal timeout detect repeated packages first/last may be partial
-    //this.detectRepeatedPackages();
+    // this.detectRepeatedPackages();
     this.detectPS01Values();
-    if (this.ps01 === '0011' && this.psi.length === 232) {
-      this.tryManchester(this.psi, this.ps01);
+    if (this.ps01f === '0011' && this.psi.length === 232) {
+      this.tryManchester(this.psi, this.ps01f);
     }
-    this.psx = this.psix(this.psi, this.ps01);
-    //debug('psx', this.psix(this.psi));
+    this.psx = this.psix(this.psi, this.ps01f);
+    // debug('psx', this.psix(this.psi));
     this.print();
   }
 
@@ -419,7 +478,7 @@ class PulseSpaceIndex {
     const psCount = [];
     let nPulseSpace = 0;
     // determine values and count
-    //debugm(pulses);
+    // debugm(pulses);
     for (let i = 0; i < pulseSpaceCount; i++) {
       const ps = pulses[i];
       const j = psValue.indexOf(ps);
@@ -435,17 +494,17 @@ class PulseSpaceIndex {
     // fill pulseSpace with these and sort
     const pulseSpace = [];
     for (let i = 0; i < psValue.length; i++) {
-      pulseSpace[i] = { ps: psValue[i], count: psCount[i]};
+      pulseSpace[i] = { ps: psValue[i], count: psCount[i] };
     }
     pulseSpace.sort((a, b) => a.ps - b.ps);
-    //debugm(pulseSpace);
+    // debugm(pulseSpace);
     // debugv(pulseSpace);
     // 2020: longest pulse is signal determines tolerance
     // ....: longest gaps are no signal: Intergap or end of packege or both
     // ....: longest gaps distance indicate repeated packages/frameCount?
-    //.....: move to analyse and don't merge?
+    // .....: move to analyse and don't merge?
     // merge values within minGap range
-/*
+    /*
 // Due to sensor lag, when received, Marks  tend to be 100us too long and
 //                                   Spaces tend to be 100us too short
 #define MARK_EXCESS    100
@@ -468,12 +527,11 @@ class PulseSpaceIndex {
       // try 1 value until 500
       let mergeGap = (psv <= 500) ? 500 : psv + 250;
       if (pulseSpace[i].ps > mergeGap) {
-        //console.log('Merge gap', mergeGap, pulseSpace[i].ps, index, psct);
+        // console.log('Merge gap', mergeGap, pulseSpace[i].ps, index, psct);
         if (index < 2) {
           if (psct <= 2) { // start spike
             mergeGap = pulseSpace[i].ps;
-          }
-          else if (psv >= 400 && index < 1) {
+          } else if (psv >= 400 && index < 1) {
             mergeGap = 700;
           }
         }
@@ -492,17 +550,17 @@ class PulseSpaceIndex {
       }
       pulseSpace[i] = { ps: pulseSpace[i].ps, count: pulseSpace[i].count, index };
     }
-    //debugm(pulseSpace);
-    //debugm(ms);
-    //debugm(counts);
+    // debugm(pulseSpace);
+    // debugm(ms);
+    // debugm(counts);
     if (i > 0) {
       pulseSpace[i - 1].totalCount = psct;
       ms.push(pulseSpace[i - 1].ps);
       counts.push(pulseSpace[i - 1].totalCount);
     }
-    //debugm(pulseSpace);
-    //debugm(ms);
-    //debugm(counts);
+    // debugm(pulseSpace);
+    // debugm(ms);
+    // debugm(counts);
 
     // todo: sort unique values and index them psi
     let pulseSpace2 = '';
