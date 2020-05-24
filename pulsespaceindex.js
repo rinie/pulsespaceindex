@@ -16,9 +16,11 @@ const fs = require('fs');
 const psixPulse = 0;
 const psixSpace = 1;
 const psixPulseSpace = 2; // fix with ES6 enums but...
+const psixLength = 3; // enable for ... < psixLength; ++ loops
 const ps01f0 = 0;
 const ps01f1 = 2;
 const ps01fFrameHT = 4;
+const ps01fLength = 6; // enable for ... < ps01fLength; += psixPulseSpace loops
 
 class PulseSpaceIndex {
   constructor(psi, micros = null, frameCount = 1, signalType = 'ook433') {
@@ -116,7 +118,8 @@ class PulseSpaceIndex {
     const maxDomCounts = 2;
     // convert to string '01'...
     // ps01f 0011
-    const ps01f = [0, 0, 0, 0, 0, 0];
+    const ps01f = [0, 0, 0, 0, counts.length-1, counts.length-1];
+    const ps01fCounts = [0, 0, 0, 0, 0, 0]; // accumulated counts <= 0, <= 1, >= ps01fFrameHT
     const min01ValuesCount = 1; // max one start/one stop sync? was 3
 
     // 2020: 0 value is ok but 1 value may be header/trailer
@@ -154,24 +157,122 @@ class PulseSpaceIndex {
     // Use this to determine split values 0, 1, HT. Gap between 1 and HT may be midsync. 0=1 no diff...
     // so 0<=Max0 <=Max01 < MinHT<=counts.length, HT becomes F for frame Header/Trailer or separator..
     // Start with maxPulse and space >= maxPulse...
+    const minFrameLength = 16;
+    const maxps01fFrameHTCount = Math.round(this.psi.length / minFrameLength);
     for (let i = counts.length - 1; i > ps01f[ps01f0 + psixPulse]; --i) {
-      if ((i > ps01f[ps01f0 + psixSpace]) && (counts[i].ct[psixSpace] > 0)) {
+      if ((i > ps01f[ps01f0 + psixSpace]) && (counts[i].ct[psixSpace] > 0) && (counts[i].ct[psixSpace] <= maxps01fFrameHTCount)) {
         ps01f[ps01fFrameHT + psixSpace] = i;
       }
       if (counts[i].ct[psixPulse] > 0) {
-        ps01f[ps01fFrameHT + psixPulse] = i;
-        if (ps01f[ps01fFrameHT + psixSpace] === 0) {
+        if ((counts[i].ct[psixPulse] <= maxps01fFrameHTCount)) {
+          ps01f[ps01fFrameHT + psixPulse] = i;
+        }
+        if ((ps01f[ps01fFrameHT + psixSpace] === 0)
+          && (counts[i].ct[psixSpace] <= maxps01fFrameHTCount)) {
           ps01f[ps01fFrameHT + psixSpace] = i;
         }
         break;
       }
     }
+    // ps01fFrameHT currently stops on largest pulse. Misses bl 2680/2802 example spike/merge...
+    // or fix this in first pulse after trailerSpace detection...
+    // like headerSpace detection...
+
+    // determine ps01fCounts...
+    for (let i = 0; i < counts.length; i++) {
+        // 0/1: accumulate from lowest
+        for (let psix = 0; psix < psixPulseSpace; psix++) {
+          if (i <= ps01f[ps01f0 + psix]) {
+            ps01fCounts[ps01f0 + psix] += counts[i].ct[psix];
+          }
+          else if (i <= ps01f[ps01f1 + psix]) {
+            ps01fCounts[ps01f1 + psix] += counts[i].ct[psix];
+          }
+          // HT accumulate to max ps01f1 and ps01fFrameHT may overlap for now
+          if (i >= ps01f[ps01fFrameHT + psix]) {
+            ps01fCounts[ps01fFrameHT + psix] += counts[i].ct[psix];
+          }
+       }
+    }
+    debugv('ps01fCounts', ps01f, ps01fCounts);
     // ps01fFrameHT now has potential Header pulse and Trailer Space
     // examine signal from start to finish
     // Stop on Header pulse and Trailer Space
     // Trailer Space: Next header pulse or header space?
     // Header pulse: next header space?
 // todo
+// frameSplit: none: no multiple frames
+// first split then check Trailer Space, Header Pulse, Header Space.. (position and occurences)...
+// rflink looses long Trailer spaces...
+    let headerPulseCount = 0;
+    let headerSpaceCount = 0;
+    let headerSpaceIndex = ps01f[ps01fFrameHT + psixSpace];
+    let trailerSpaceCount = 0;
+    let frameStart = 0;
+    let shortFrameSplits = 0;
+    let frameSplits = 0;
+    let frameLength = minFrameLength;
+    const frameSplit = [];
+    const s = this.psi;
+
+    for (let j = 0; j < s.length; ) {
+      if (j > 0) {
+        debugv('FrameSplit', j, frameStart, j-frameStart, headerPulseCount, headerSpaceCount, trailerSpaceCount);
+        // 3 situations: partial start frame, normal frame, Repeat frame (NEC) clear header, clear trailer 0 payload
+        if ((frameStart === 0 && (trailerSpaceCount === 1))
+          || ((j - frameStart) >= minFrameLength)
+          || ((trailerSpaceCount >= headerPulseCount) && (headerPulseCount >= frameSplits + 1))
+          ) {
+          if (j - frameStart > frameLength) { // normal frame length...
+            frameLength = j - frameStart;
+          }
+          frameStart = j;
+          frameSplits++;
+        }
+        else { // todo NEC repeate frame 4206: Single data but clear header/trailer
+              // headerPulse + headerSpace + trailerSpace overrules minFrameLength...
+          shortFrameSplits++;
+        }
+      }
+      // optional header
+      if (s[j+psixPulse] >= ps01f[ps01fFrameHT + psixPulse]) {
+        headerPulseCount++;
+      }
+      else if (s[j+psixPulse] > ps01f[ps01f1 + psixPulse]) {
+        if (headerPulseCount > 0 && trailerSpaceCount > 0) {
+          ps01f[ps01fFrameHT + psixPulse] = s[j+psixPulse];
+          headerPulseCount++;
+        }
+      }
+      if (s[j+psixSpace] > ps01f[ps01f1 + psixSpace]) {
+        headerSpaceCount++;
+        if (s[j+psixSpace] < headerSpaceIndex) {
+          headerSpaceIndex = s[j+psixSpace];
+        }
+      }
+      j += 2;
+      // skip data
+      while ((j < s.length - 1)
+        && (s[j + psixPulse] < ps01f[ps01fFrameHT + psixPulse])
+        && (s[j + psixSpace] < ps01f[ps01fFrameHT + psixSpace]))
+        {
+          j += 2;
+        }
+      // optional trailer
+      if ((j < s.length - 1)
+        //&& (s[j + psixPulse] < ps01f[ps01fFrameHT + psixPulse])
+        && (s[j + psixSpace] >= ps01f[ps01fFrameHT + psixSpace])) {
+          trailerSpaceCount++;
+          j += 2;
+        }
+    }
+    debugv('frameSplits', s.length, frameLength, frameStart, frameSplits, shortFrameSplits, headerPulseCount, headerSpaceCount, trailerSpaceCount);
+   // if (frameLength > minFrameLength) {
+   //   this.frameCount = Math.round(this.psi.length / frameLength);
+   // }
+   // else {
+      this.frameCount = frameSplits + 1;
+   // }
 
     // Header (optional): pulse and/or space
     // Trailer (no signal) pulse only.
@@ -202,7 +303,7 @@ class PulseSpaceIndex {
           }
           dx[psixPulseSpace]++;
         }
-        for (let psix = 0; psix < psixPulseSpace + 1; psix++) {
+        for (let psix = 0; psix < psixLength; psix++) {
           if (dx[psix] > maxDx[psix]) {
             maxDx[psix] = dx[psix];
           }
@@ -213,16 +314,36 @@ class PulseSpaceIndex {
 
     // pulse [0] and [2]
     counts[ps01f[ps01f0 + psixPulse]].p = 0;
-    if (ps01f[ps01f0 + psixPulse] !== ps01f[ps01f1 + psixPulse]) {
-      counts[ps01f[ps01f1 + psixPulse]].p = 1;
+    if (ps01f[ps01f1 + psixPulse] !== ps01f[ps01f0 + psixPulse]) {
+      if (ps01fCounts[ps01f1 + psixPulse] > frameSplits + 1) {
+        counts[ps01f[ps01f1 + psixPulse]].p = 1;
+      }
+      else {
+        ps01f[ps01f1 + psixPulse] = ps01f[ps01f0 + psixPulse];
+      }
+    }
+
+    if (headerPulseCount === 0) {
+      ps01f[ps01fFrameHT + psixPulse] = 0; // no header pulse
+    }
+
+    if (headerSpaceCount === 0 && trailerSpaceCount === 0) {
+      ps01f[ps01fFrameHT + psixPulse] = 0; // no trailerSpace recorded
+    }
+    else {
+      ps01f[ps01fFrameHT + psixSpace] = headerSpaceIndex;
     }
 
     // space [1] and [3]
     counts[ps01f[ps01f0 + psixSpace]].s = 0;
-    if (ps01f[ps01f0 + psixSpace] !== ps01f[ps01f1 + psixSpace]) {
-      counts[ps01f[ps01f1 + psixSpace]].s = 1;
+    if (ps01f[ps01f1 + psixSpace] !== ps01f[ps01f0 + psixSpace]) {
+      if (ps01fCounts[ps01f1 + psixSpace] > frameSplits + 1) {
+        counts[ps01f[ps01f1 + psixSpace]].s = 1;
+      }
+      else {
+        ps01f[ps01f1 + psixSpace] = ps01f[ps01f0 + psixSpace];
+      }
     }
-
     this.counts = counts;
     this.ps01f = ps01f.join('');
   }
@@ -263,7 +384,7 @@ class PulseSpaceIndex {
    * todo: Pulse Distance modulation: all pulses are 0 c0...
    * todo: Kaku Old: c01, 0 01, 1, 10, 2/F 00
    * todo: Manchester/Biphase
-   * todo: Header/Leader data Trailer/Pause. Longer signal or repeated 1s
+   * todo: Header/header data Trailer/Pause. Longer signal or repeated 1s
    */
   psix(s, ps01f) {
     const dataType = ((ps01f[0] != ps01f[2]) ? 'p' : '') + ((ps01f[1] != ps01f[3]) ? 's' : '');
@@ -279,7 +400,7 @@ class PulseSpaceIndex {
     };
 
     // ps both s + previous, p + next
-    // data both 01 (and) , leader/trailer at least one > 1
+    // data both 01 (and) , header/trailer at least one > 1
     // alternate > 1 sections with <= 1 sections,
     // <=1 sections always start with pulse, end with space...
     let i = sx.start;
@@ -288,18 +409,18 @@ class PulseSpaceIndex {
     debugv('psix', ps01f, sx);
     while (i < len) {
       const iLast = i;
-      let leader = ''; // pulse or pulse space
+      let header = ''; // pulse or pulse space
       let data = '';
       let datax = '';
       let trailer = ''; // space
-      // Leader optional > 1 section
+      // header optional > 1 section
       while ((j < len - 1) && ((s[j] > sx.data1[psixPulse]) || (s[j + 1] > sx.data1[psixSpace]))) {
-        leader += s[j++]; // pulse
-        leader += s[j++]; // space
+        header += s[j++]; // pulse
+        header += s[j++]; // space
       }
       if (j > i) {
-        // debugv('leader', leader, i, j);
-        this.sxAdd(sx, leader);
+        // debugv('header', header, i, j);
+        this.sxAdd(sx, header);
         i = j;
       }
 
@@ -334,13 +455,13 @@ class PulseSpaceIndex {
         trailer += s[j++];
         trailer += s[j++];
         this.sxAdd(sx, trailer);
-        if (leader.length > 0) {
-          debugv(dataType, 'leader', leader, 'datax', datax, 'trailer', trailer, data.length, iLast, j, data);
+        if (header.length > 0) {
+          debugv(dataType, 'header', header, 'datax', datax, 'trailer', trailer, data.length, iLast, j, data);
         } else {
           debugv(dataType, 'datax', datax, 'trailer', trailer, data.length, iLast, j, data);
         }
-      } else if (leader.length > 0) {
-        debugv(dataType, 'leader', leader, 'datax', datax, data.length, iLast, j, data);
+      } else if (header.length > 0) {
+        debugv(dataType, 'header', header, 'datax', datax, data.length, iLast, j, data);
       } else {
         debugv(dataType, 'datax', datax, data.length, iLast, j, data);
       }
@@ -367,30 +488,30 @@ class PulseSpaceIndex {
     };
 
     // ps both s + previous, p + next
-    // data both 01 (and) , leader/trailer at least one > 1
+    // data both 01 (and) , header/trailer at least one > 1
     // alternate > 1 sections with <= 1 sections,
     // <=1 sections always start with pulse, end with space...
     let i = sx.start;
     let j = i;
     const len = sx.end;
-    if (ps01f != '0011') {
+    if (ps01f.slice(0,4) != '0011') {
       return;
     }
     debugv('tryManchester', ps01f, sx);
     while (i < len) {
       const iLast = i;
-      let leader = ''; // pulse or pulse space
+      let header = ''; // pulse or pulse space
       let data = '';
       let datax = '';
       let trailer = ''; // space
-      // Leader optional > 1 section
+      // header optional > 1 section
       while ((j < len - 1) && ((s[j] > 1) || (s[j + 1] > 1))) {
-        leader += s[j++]; // pulse
-        leader += s[j++]; // space
+        header += s[j++]; // pulse
+        header += s[j++]; // space
       }
       if (j > i) {
-        // debugv('leader', leader, i, j);
-        this.sxAdd(sx, leader);
+        // debugv('header', header, i, j);
+        this.sxAdd(sx, header);
         i = j;
       }
 
@@ -433,13 +554,13 @@ class PulseSpaceIndex {
         trailer += s[j++];
         trailer += s[j++];
         this.sxAdd(sx, trailer);
-        if (leader.length > 0) {
-          debugv('tryManchester', dataType, 'leader', leader, 'preambleLength', preambleLength, 'datax', datax, 'trailer', trailer, data.length, iLast, j, data);
+        if (header.length > 0) {
+          debugv('tryManchester', dataType, 'header', header, 'preambleLength', preambleLength, 'datax', datax, 'trailer', trailer, data.length, iLast, j, data);
         } else {
           debugv('tryManchester', dataType, 'preambleLength', preambleLength, 'datax', datax, 'trailer', trailer, data.length, iLast, j, data);
         }
-      } else if (leader.length > 0) {
-        debugv('tryManchester', dataType, 'leader', leader, 'preambleLength', preambleLength, 'datax', datax, data.length, iLast, j, data);
+      } else if (header.length > 0) {
+        debugv('tryManchester', dataType, 'header', header, 'preambleLength', preambleLength, 'datax', datax, data.length, iLast, j, data);
       } else {
         debugv('tryManchester', dataType, 'preambleLength', preambleLength, 'datax', datax, data.length, iLast, j, data);
       }
@@ -462,7 +583,8 @@ class PulseSpaceIndex {
     // based on trailing space / signal timeout detect repeated packages first/last may be partial
     // this.detectRepeatedPackages();
     this.detectPS01Values();
-    if (this.ps01f === '0011' && this.psi.length === 232) {
+    debug('ps01f', this.ps01f, this.ps01f.slice(0,4), this.psi.length);
+    if (this.ps01f.slice(0,4) === '0011' && this.psi.length >= 140) {
       this.tryManchester(this.psi, this.ps01f);
     }
     this.psx = this.psix(this.psi, this.ps01f);
@@ -500,7 +622,7 @@ class PulseSpaceIndex {
     // debugm(pulseSpace);
     // debugv(pulseSpace);
     // 2020: longest pulse is signal determines tolerance
-    // ....: longest gaps are no signal: Intergap or end of packege or both
+    // ....: longest gaps are no signal: Intergap or end of package or both
     // ....: longest gaps distance indicate repeated packages/frameCount?
     // .....: move to analyse and don't merge?
     // merge values within minGap range
@@ -524,6 +646,9 @@ class PulseSpaceIndex {
     let psv = pulseSpace[0].ps;
     let i = 0;
     for (; i < pulseSpace.length; i++) {
+      // this is too hard coded
+      // use accumulative 0 detection to determine 0/1 and then decide the gap range
+      // short spikes (first pulse..) HHIIT max 5 per frame not 0/1 (Intermediate gap is rare).
       // try 1 value until 500
       let mergeGap = (psv <= 500) ? 500 : psv + 250;
       if (pulseSpace[i].ps > mergeGap) {
