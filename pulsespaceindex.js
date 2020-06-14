@@ -131,6 +131,10 @@ class PulseSpaceIndex {
       //  min01ValuesCount = Math.round(this.count/32); // todo max this % of packages length
       // }
       for (let psix = 0; psix < psixPulseSpace; psix++) {
+        if (typeof counts[i] === 'undefined') {
+          debugv('Add counts[i]', i, maxI);
+          counts[i] = { i: i, t: null, ct: [0, 0, 0] }; // i.. shift gaps?
+        }
         const ct = counts[i].ct[psix];
         if (ct > min01ValuesCount) {
           const ct0 = counts[ps01f[ps01f0 + psix]].ct[psix];
@@ -650,6 +654,9 @@ class PulseSpaceIndex {
       // use accumulative 0 detection to determine 0/1 and then decide the gap range
       // short spikes (first pulse..) HHIIT max 5 per frame not 0/1 (Intermediate gap is rare).
       // try 1 value until 500
+      // Proper determine pulse 0 and space 0.
+      // al values <= that: merge
+      // determine space/pulse excess: Note and merge...
       let mergeGap = (psv <= 500) ? 500 : psv + 250;
       if (pulseSpace[i].ps > mergeGap) {
         // console.log('Merge gap', mergeGap, pulseSpace[i].ps, index, psct);
