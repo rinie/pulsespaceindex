@@ -802,6 +802,16 @@ if (process.argv[2].toLowerCase().endsWith('.js')) { // js module
       psi.microsToPsi(pulses, `rflink:${line}`, `rflink:${lc + 1}`);
       psi.analyse();
       debug(psi);
+    } else if (line.includes('AA B1 ')) {
+      // Tasmota Portisch Sonoff RFbridge v212:22:52.999 RSL: RESULT = {"Time":"2021-08-18T12:22:52","RfRaw":{"Data":"AA B1 03 0172 041A 2AF8 01010110010101010101011001010101010101100110010102 55"}}
+      const ptData = line.match(/AA B1 .*55/)[0].split(' ');
+      const nrPulseLengths = Number(ptData[2]);
+      const pulseLengths = Array.from(ptData.slice(3, 3 + nrPulseLengths), x => parseInt(x, 16));
+      const ppsi = ptData[3 + nrPulseLengths];
+      // debugv('Tasmota Portisch ', ptData, pulseLengths, psi);
+      var psi = new PulseSpaceIndex(ppsi, pulseLengths, 1, 'Tasmota Portisch Sonoff RFbridge');
+      psi.analyse();
+      debug(psi);
     } else if (line.includes('RFLink')) {
       debugv('Rflink Domoticzlog ', line);
     } else {

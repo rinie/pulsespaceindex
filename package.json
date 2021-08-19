@@ -25,12 +25,12 @@
   },
   "bundleDependencies": false,
   "dependencies": {
-    "debug": "^3.2.6"
+    "debug": "^3.2.7"
   },
   "devDependencies": {
     "eslint": "^5.16.0",
     "eslint-config-airbnb-base": "^13.1.0",
-    "eslint-plugin-import": "^2.20.2"
+    "eslint-plugin-import": "^2.22.1"
   },
   "deprecated": false,
   "description": "Ook pulse (On) Space (Off) Index processing",

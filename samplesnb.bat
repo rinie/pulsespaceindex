@@ -9,4 +9,5 @@ node index.js ./samples/pimaticsamples.js >>samples/debug.csv
 node pulsespaceindex.js ./samples/samples1.js >>samples/debug.csv
 node pulsespaceindex.js ./samples/blsamples.js  >>samples/debug.csv
 node index.js samples/rflinkdata.csv >>samples/debug.csv
+node index.js samples/sonoffrfportisch.txt >>samples/debug.csv
 rem echo 'pulsespaceindex.js testend' >>samples/debug.csv
