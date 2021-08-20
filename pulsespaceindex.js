@@ -808,8 +808,13 @@ if (process.argv[2].toLowerCase().endsWith('.js')) { // js module
       const nrPulseLengths = Number(ptData[2]);
       const pulseLengths = Array.from(ptData.slice(3, 3 + nrPulseLengths), x => parseInt(x, 16));
       const ppsi = ptData[3 + nrPulseLengths];
-      // debugv('Tasmota Portisch ', ptData, pulseLengths, psi);
-      var psi = new PulseSpaceIndex(ppsi, pulseLengths, 1, 'Tasmota Portisch Sonoff RFbridge');
+      // portisch does not have buckets in time sequence so convert to pulses and use microsToPsi...
+      // Als F protection
+      const pulses = Array.from(ppsi, x => ((parseInt(x, 16) < pulseLengths.length) ? pulseLengths[parseInt(x, 16)] : (pulseLengths.length - 1)));
+      //debugv('Tasmota Portisch ', ptData, pulseLengths, pulses);
+      //var psi = new PulseSpaceIndex(ppsi, pulseLengths, 1, 'Tasmota Portisch Sonoff RFbridge');
+      const psi = new PulseSpaceIndex(null);
+      psi.microsToPsi(pulses, line.match(/AA B1 .*55/), `Portisch Sorted`);
       psi.analyse();
       debug(psi);
     } else if (line.includes('RFLink')) {
