@@ -3,30 +3,32 @@ PulseSpaceIndex node.js ES6 for analyzing OOK 433 and RF signals
 
 Previously pulsespaceindex.h used in Arduino projects (Nodo/Embapps/he853 remote).
 Now using Broadlink RM or Sonoff RF Bridge 433 move this to NodeJS
-Also include samples from LIRC/RfLink/PiMatic and PiLight
+Also include samples from LIRC/RfLink/PiMatic/PiLight and Portisch
 
 Basic is an array of microsecond pulses of OOK signals
 Either indexed (pulsespaceindex.h or pimatic) or not
 
-set DEBUG=*
-set DEBUG_DEPTH=3
+> set DEBUG=* 
+> set DEBUG_DEPTH=3
+
+Currently different receivers tested with NewKaku ID 01fa22ae
 
 http://tech.jolowe.se/home-automation-rf-protocols/
 
-Kaku/Proove/Anslut/Nexa:
-1: T, T
-0: T, 5T
-SYNC: T, 10T
-Pause: T, 40T
-T: 250 us
+>Kaku/Proove/Anslut/Nexa:
+	1: T, T
+	0: T, 5T
+	SYNC: T, 10T
+	Pause: T, 40T
+	T: 250 us
 
-Packetformat
+**Packetformat**
 Every packet consists of a sync bit followed by 26 + 2 + 4 (total 32 logical data part bits) and is ended by a pause bit.
 
-S HHHH HHHH HHHH HHHH HHHH HHHH HHGO CCEE P
+> S HHHH HHHH HHHH HHHH HHHH HHHH HHGO CCEE P
 
-S = Sync bit.
-H = The first 26 bits are transmitter unique codes, and it is this code that the reciever "learns" to recognize.
+>S = Sync bit.
+H = The first 26 bits are transmitter unique codes, and it is this code that the receiver "learns" to recognize.
 G = Group code. Set to 0 for on, 1 for off.
 O = On/Off bit. Set to 0 for on, 1 for off.
 C = Channel bits. Proove/Anslut = 00, Nexa = 11.
@@ -37,45 +39,43 @@ P = Pause bit.
 
 For every button press, N identical packets are sent. For Proove/Anslut N is six, and for Nexa it is five.
 
-RKR: Reverse 1/0 def?
+**RKR:** Reverse 1/0 def?
 Yes: 1 for on, 0 for off
 
-ev1527 T T, 31T
-H 3T, T
-L T, 3T
-
+>ev1527/Oldkaku  T T, 31T H 3T, T L T, 3T
 20 ID
 4 DATA
 
-2021-08-20 Receive same NewKaku with Broadlink RM, RF Link and Tasmota Sonoff RF Brdige with Portisch firmware
-Rflink 01fa22ae
+**2021-08-20** Receive same NewKaku with Broadlink RM, RF Link and Tasmota Sonoff RF Brdige with Portisch firmware:
+
+>Rflink 01fa22ae
 Binary 01111110100010001010101110
 0 = T,T,T,4T, 1 = T,4T,T,T, dim = T,T,T,T op bit 27
 So 0 = 0001 And 1 = 0100
 0100010001000100010001000001010000010001000101000001000100010100000101000001010000010100010001000001
 ?
 
-02 0001 0100 0100 0100 0100 0100 0100 0001 0100 0001 0001 0001 0100 0001 0001 0001 0100 0001 0100 0001 0100 0001 0100 0100 0100 0001 0100 0001 0001 0001 0001 0001 03
+>02 0001 0100 0100 0100 0100 0100 0100 0001 0100 0001 0001 0001 0100 0001 0001 0001 0100 0001 0100 0001 0100 0001 0100 0100 0100 0001 0100 0001 0001 0001 0001 0001 03
     0    1    1    1    1    1    1    0    1    0    0    0    1    0    0    0    1    0    1    0    1    0    1    1    1    0    1    0    0    0    0    0    
 
-NewKAKU bitstream= (First sent) AA AAAAAAAA AAAAAAAA AAAAAAAACCUUUU(LLLL) -> A=KAKU_address, C=command, U=KAKU-Unit, L=extra dimlevel bits (optional)
+>NewKAKU bitstream= (First sent) AA AAAAAAAA AAAAAAAA AAAAAAAACCUUUU(LLLL) -> A=KAKU_address, C=command, U=KAKU-Unit, L=extra dimlevel bits (optional)
 01111110100010001010101110100000    
 01111110100010001010101110
 
-0 = T,T,T,4T, 1 = T,4T,T,T, dim = T,T,T,T op bit 27
-So 0 = 0001 And 1 = 0100
-Or Pulse is always 0 so only space
-0 = 01 and 1 = 10
+>0 = T,T,T,4T, 1 = T,4T,T,T, dim = T,T,T,T op bit 27
+So **0** = **0001** And 1 = **0100**
+However Pulse is always 0, using only space
+**0** = **01** and **1** = **10**
 
-000102:02x6aa99595999a9955-03
+>000102:02x6aa99595999a9955-03
 0110101010101001100101011001010110011001100110101001100101010101
 0 1 1 1 1 1 1 0 1 0 0 0 1 0 1 0 1 0 1 0 1 0 1 1 1 0 1 0 0 0 0 0
 
-01111110100010101010101110100000
+>01111110100010101010101110100000
 
 Matches 100%
-
-psiv {
+**Broadlink RM3 Pro**
+>psiv {
   signalType: 'ook433',
   comment: 'newkaku',
   frameCount: 1,
@@ -104,7 +104,9 @@ psiv psix 000102 {
   start: 0,
   end: 886
 }
-psiv s datax 5656666a655-01 trailer 03 46 0 94 0101011001010110011001100110101001100101010101
+
+
+>psiv s datax 5656666a655-01 trailer 03 46 0 94 0101011001010110011001100110101001100101010101
 psiv s header 02 datax 6aa99595999a9955 trailer 03 64 94 226 0110101010101001100101011001010110011001100110101001100101010101
 psiv s header 02 datax 6aa99595999a9955 trailer 03 64 226 358 0110101010101001100101011001010110011001100110101001100101010101
 psiv s header 02 datax 6aa99595999a9955 trailer 03 64 358 490 0110101010101001100101011001010110011001100110101001100101010101
@@ -130,7 +132,9 @@ psi PulseSpaceIndex {
   si: '01010110010101100110011001101010011001010101013201101010101010011001010110010101100110011001101010011001010101013201101010101010011001010110010101100110011001101010011001010101013201101010101010011001010110010101100110011001101010011001010101013201101010101010011001010110010101100110011001101010011001010101013201101010101010011001010110010101100110011001101010011001010101013201101010101010011001010110010101100110011001101010011001010101014'
 }
 
-psiv Rflink Domoticzlog  2020-01-28 11:11:31.230 RFLink: 20;E4;NewKaku;ID=00d0904a;SWITCH=3;CMD=ON;
+**RfLink via Domoticz:**
+
+>psiv Rflink Domoticzlog  2020-01-28 11:11:31.230 RFLink: 20;E4;NewKaku;ID=00d0904a;SWITCH=3;CMD=ON;
 psiv Rflink Domoticzlog  2020-01-28 11:11:31.233 (RFLink) Light/Switch (Unknown)
 psim microsToPsi  rflink:2020-01-28 14:50:31.239 RFLink: 20;E0;DEBUG;Pulses=132;Pulses(uSec)=30,2700,120,210,120,1200,120,1200,120,210,120,1200,120,210,120,1200,120,210,120,1200,120,210,120,1200,120,210,120,1200,120,210,120,210,120,1230,120,1200,120,210,120,210,120,1200,120,210,120,1200,120,210,120,1200,120,1200,120,210,120,210,120,1200,90,210,120,1200,120,210,120,1230,120,1200,120,210,90,210,120,1200,90,1200,120,210,120,180,120,1200,120,1200,120,210,120,180,120,1200,120,1200,120,210,120,1200,120,210,120,1200,120,210,120,180,120,1200,120,1200,120,210,120,180,120,1200,120,180,120,1200,120,180,120,1200,120,210,120,1230,120,210,120,1200,120,6990;
 psiv ps01fCounts [ 0, 0, 0, 1, 3, 2 ] [ 66, 32, 0, 32, 0, 2 ]
@@ -165,7 +169,10 @@ psi PulseSpaceIndex {
   si: '201101010101010011001010110010101100110011001101010011001010101013'
 }
 
-psim microsToPsi  [
+**Portisch via Sonoff RF Bridge Tasmota**
+Using microsToPsi as Portisch does not sort index to shortest time...
+
+>psim microsToPsi  [
   'AA B1 04 012C 09CE 04C4 23BE 010002020002000200020002000200000202000002000200020200000200020002020000020200000202000002020002000200000202000002000200020002000203 55',
   index: 74,
   input: '20:49:32.267 RSL: RESULT = {"Time":"2021-08-19T20:49:32","RfRaw":{"Data":"AA B1 04 012C 09CE 04C4 23BE 010002020002000200020002000200000202000002000200020200000200020002020000020200000202000002020002000200000202000002000200020002000203 55"}}',
@@ -204,21 +211,8 @@ psi PulseSpaceIndex {
 }
 
 Old comments...
-
-pimatic sorted buckets en dan kijken of je buiten header/footer 0/1 codering kunt gebruiken.
-Nodo: eerste/laatste 2 kunnen verminkt zijn.
-Rest moet 'tov einde' matchen
-Laatste footer is timeout...
-
-Manchester is nodig. PDM kan je ook direct.
-Repeat
-T
-Pulses
-
-(Bit)Mapping
-Encode/Decode
-
-... signal preamble/sync data footer en dan repeat
+- pimatic : sorted buckets 
+- Nodo: first/last can be off: AGC timing and last space is 'no signal' timeout.
 
 0 timings
 1 PSI
@@ -234,7 +228,6 @@ lowlevel:
 - Sonoff basic
 - Sonoff hacked
 - he853
-
 - RF link?
 - RC switch?
 
@@ -244,8 +237,8 @@ PSIX
 PSIH
 PSID
 
-
-var OokTimings = [
+From he853: 
+>var OokTimings = [
 {
 	ProtocolName: 'AnBan',
 	BaseTime: 320, //  T
@@ -288,7 +281,6 @@ var OokTimings = [
   010101100101010101010110010101010101011001100101 02
   000100000001000000010100
   010001000110
-
   01000 10001 10
 */
 	// protocol info, not direct timing
@@ -302,7 +294,6 @@ var OokTimings = [
 	Data: [[1, 1], [1, 4]], // 0 = 01, 1=10, Dim = 00 2/F/_
 	WireBitCount: 64, //+4*2 for dim. 32 net bits: ID 0..25, All: 26, OnOff: 27, Unit 28..31
 	FrameCount: 18,
-
 	// protocol info, not direct timing
 	BitEncoding: ['01', '10', '00'],
 } ,
@@ -316,3 +307,5 @@ var OokTimings = [
 	FrameCount: 7
 } //,
 ];
+
+
