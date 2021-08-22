@@ -21,6 +21,7 @@ const ps01f0 = 0;
 const ps01f1 = 2;
 const ps01fFrameHT = 4;
 const ps01fLength = 6; // enable for ... < ps01fLength; += psixPulseSpace loops
+const tryMan=false;
 
 class PulseSpaceIndex {
   constructor(psi, micros = null, frameCount = 1, signalType = 'ook433') {
@@ -588,7 +589,7 @@ class PulseSpaceIndex {
     // this.detectRepeatedPackages();
     this.detectPS01Values();
     debug('ps01f', this.ps01f, this.ps01f.slice(0,4), this.psi.length);
-    if (this.ps01f.slice(0,4) === '0011' && this.psi.length >= 140) {
+    if (tryMan && this.ps01f.slice(0,4) === '0011' && this.psi.length >= 140) {
       this.tryManchester(this.psi, this.ps01f);
     }
     this.psx = this.psix(this.psi, this.ps01f);
@@ -814,7 +815,7 @@ if (process.argv[2].toLowerCase().endsWith('.js')) { // js module
       //debugv('Tasmota Portisch ', ptData, pulseLengths, pulses);
       //var psi = new PulseSpaceIndex(ppsi, pulseLengths, 1, 'Tasmota Portisch Sonoff RFbridge');
       const psi = new PulseSpaceIndex(null);
-      psi.microsToPsi(pulses, line.match(/AA B1 .*55/), `Portisch Sorted`);
+      psi.microsToPsi(pulses, line.match(/AA B1 .*55/), `Portisch Sorted:${lc + 1}`);
       psi.analyse();
       debug(psi);
     } else if (line.includes('RFLink')) {
