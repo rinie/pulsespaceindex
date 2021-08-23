@@ -811,7 +811,7 @@ if (process.argv[2].toLowerCase().endsWith('.js')) { // js module
       const ppsi = ptData[3 + nrPulseLengths];
       // portisch does not have buckets in time sequence so convert to pulses and use microsToPsi...
       // Als F protection
-      const pulses = Array.from(ppsi, x => ((parseInt(x, 16) < pulseLengths.length) ? pulseLengths[parseInt(x, 16)] : (pulseLengths.length - 1)));
+      const pulses = Array.from(ppsi, x => (((parseInt(x, 16) & 0x07) < pulseLengths.length) ? pulseLengths[parseInt(x, 16) & 0x07] : (pulseLengths.length - 1)));
       //debugv('Tasmota Portisch ', ptData, pulseLengths, pulses);
       //var psi = new PulseSpaceIndex(ppsi, pulseLengths, 1, 'Tasmota Portisch Sonoff RFbridge');
       const psi = new PulseSpaceIndex(null);
