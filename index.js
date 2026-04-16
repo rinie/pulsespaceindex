@@ -1,2 +1,2 @@
-const psi = require('./pulsespaceindex');
+module.exports = require('./pulsespaceindex');
 
