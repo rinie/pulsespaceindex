@@ -21,7 +21,7 @@ const ps01f0 = 0;
 const ps01f1 = 2;
 const ps01fFrameHT = 4;
 const ps01fLength = 6; // enable for ... < ps01fLength; += psixPulseSpace loops
-const tryMan=false;
+const tryMan = true;
 
 class PulseSpaceIndex {
   constructor(psi, micros = null, frameCount = 1, signalType = 'ook433') {
@@ -480,102 +480,123 @@ class PulseSpaceIndex {
   }
 
   tryManchester(s, ps01f) {
-    const dataType = ((ps01f[0] != ps01f[2]) ? 'p' : '') + ((ps01f[1] != ps01f[3]) ? 's' : '');
-    const sx = {
-      sx: `${ps01f}:`,
-      hexMode: false,
-      constantMode: false,
-      data0: [ps01f[0], ps01f[1]],
-      data1: [ps01f[2], ps01f[3]],
-      dataType,
-      start: 0,
-      end: s.length,
-    };
-
-    // ps both s + previous, p + next
-    // data both 01 (and) , header/trailer at least one > 1
-    // alternate > 1 sections with <= 1 sections,
-    // <=1 sections always start with pulse, end with space...
-    let i = sx.start;
-    let j = i;
-    const len = sx.end;
-    if (ps01f.slice(0,4) != '0011') {
-      return;
+    // Decode Manchester-encoded RF signal from PSI representation.
+    // Manchester encoding uses two timing values: T (short, index 0) and 2T (long, index 1).
+    // G.E. Thomas convention: H→L transition at mid-bit = 1, L→H = 0.
+    // Only applicable when ps01f[0..3] == '0011' (both pulse and space have exactly two values).
+    if (ps01f.slice(0, 4) !== '0011') {
+      return null;
     }
-    debugv('tryManchester', ps01f, sx);
+
+    const dataMax = 1; // PSI index values 0 and 1 are data; 2+ are header/trailer
+    const sx = { sx: `${ps01f}:m:`, hexMode: false, constantMode: false, bitCount: 0 };
+    let i = 0;
+    const len = s.length;
+
     while (i < len) {
-      const iLast = i;
-      let header = ''; // pulse or pulse space
-      let data = '';
-      let datax = '';
-      let trailer = ''; // space
-      // header optional > 1 section
-      while ((j < len - 1) && ((s[j] > 1) || (s[j + 1] > 1))) {
-        header += s[j++]; // pulse
-        header += s[j++]; // space
+      const iStart = i;
+
+      // Consume header section: PSI pairs where either index exceeds dataMax
+      let header = '';
+      while (i < len - 1) {
+        const p = parseInt(s[i], 16);
+        const sp = parseInt(s[i + 1], 16);
+        if (p <= dataMax && sp <= dataMax) break;
+        header += s[i++];
+        header += s[i++];
       }
-      if (j > i) {
-        // debugv('header', header, i, j);
+      if (header.length > 0) {
         this.sxAdd(sx, header);
-        i = j;
       }
 
-      let preambleLength = 0;
-      while ((j < len - 1) && ((s[j] === '1'))) {
-        preambleLength++;
-        j++;
+      if (i >= len - 1) break;
+
+      // Expand PSI data pairs to flat half-period sequence.
+      // Each PSI pair (pulse_idx, space_idx) becomes:
+      //   pulse_idx=0 → one H; pulse_idx=1 → two H  (2T = two T half-periods)
+      //   space_idx=0 → one L; space_idx=1 → two L
+      const half = []; // true = H (RF on), false = L (RF off)
+      while (i < len - 1) {
+        const p = parseInt(s[i], 16);
+        const sp = parseInt(s[i + 1], 16);
+        if (p > dataMax || sp > dataMax) break;
+        half.push(true);
+        if (p === 1) half.push(true);
+        half.push(false);
+        if (sp === 1) half.push(false);
+        i += 2;
       }
-      let curValue = '0';
-      // data <= 1 section
-      let dataNibble = curValue;
-      while ((j < len - 1) && ((s[j] <= '1'))) {
-        if (s[j] === '0') {
-          if (s[j + 1] === '0') {
-            j++;
-          } else { // no manchester
-            debugv('tryManchester no manchester', s[j + 1], j, sx);
-          }
-        } else { // 1
-          curValue = (curValue === '0') ? '1' : '0';
+      // Handle trailing lone pulse (odd-length PSI)
+      if (i < len) {
+        const p = parseInt(s[i], 16);
+        if (p <= dataMax) {
+          half.push(true);
+          if (p === 1) half.push(true);
+          i++;
         }
-        dataNibble += curValue;
-        // debugv('dataNibble', dataNibble, j);
-        if (dataNibble.length >= 4) {
-          data += dataNibble;
-          datax += parseInt(dataNibble, 2).toString(16);
-          this.sxAdd(sx, parseInt(dataNibble, 2).toString(16), false, true);
-          dataNibble = '';
-        }
-        j++;
       }
-      if (dataNibble.length > 0) {
-        data += dataNibble;
-        datax += `-${dataNibble}`;
-        this.sxAdd(sx, dataNibble);
+
+      if (half.length < 4) {
+        if (i <= iStart) i = iStart + 2;
+        continue;
       }
-      i = j;
-      // Trailer optional > 1 Space
-      if ((j < len - 1) && ((s[j] <= sx.data1[psixPulse]) && (s[j + 1] > sx.data1[psixSpace]))) {
-        trailer += s[j++];
-        trailer += s[j++];
-        this.sxAdd(sx, trailer);
-        if (header.length > 0) {
-          debugv('tryManchester', dataType, 'header', header, 'preambleLength', preambleLength, 'datax', datax, 'trailer', trailer, data.length, iLast, j, data);
+
+      // Skip preamble: leading alternating H,L pairs (T-period clock bursts)
+      let pre = 0;
+      while (pre + 1 < half.length && half[pre] === true && half[pre + 1] === false) {
+        pre += 2;
+      }
+
+      // Decode Manchester bits from half-period pairs.
+      // H,L pair → bit 1 (G.E. Thomas: high-to-low mid-bit transition)
+      // L,H pair → bit 0 (G.E. Thomas: low-to-high mid-bit transition)
+      const bits = [];
+      let pos = pre;
+      while (pos + 1 < half.length) {
+        if (half[pos] === true && half[pos + 1] === false) {
+          bits.push(1);
+        } else if (half[pos] === false && half[pos + 1] === true) {
+          bits.push(0);
         } else {
-          debugv('tryManchester', dataType, 'preambleLength', preambleLength, 'datax', datax, 'trailer', trailer, data.length, iLast, j, data);
+          break; // violation: not valid Manchester
         }
-      } else if (header.length > 0) {
-        debugv('tryManchester', dataType, 'header', header, 'preambleLength', preambleLength, 'datax', datax, data.length, iLast, j, data);
-      } else {
-        debugv('tryManchester', dataType, 'preambleLength', preambleLength, 'datax', datax, data.length, iLast, j, data);
+        pos += 2;
       }
-      i = j;
-      if (i <= iLast) {
-        i = iLast + 2;
+
+      debugv('tryManchester preamble', pre / 2, 'bits', bits.length, 'halfPeriods', half.length);
+
+      if (bits.length > 0) {
+        sx.bitCount += bits.length;
+        let nibble = '';
+        for (let b = 0; b < bits.length; b++) {
+          nibble += bits[b];
+          if (nibble.length === 4) {
+            this.sxAdd(sx, parseInt(nibble, 2).toString(16), false, true);
+            nibble = '';
+          }
+        }
+        if (nibble.length > 0) {
+          this.sxAdd(sx, nibble); // partial trailing nibble
+        }
       }
-      j = i;
+
+      // Consume trailer section
+      let trailer = '';
+      while (i < len - 1) {
+        const p = parseInt(s[i], 16);
+        const sp = parseInt(s[i + 1], 16);
+        if (p <= dataMax && sp <= dataMax) break;
+        trailer += s[i++];
+        trailer += s[i++];
+      }
+      if (trailer.length > 0) {
+        this.sxAdd(sx, trailer);
+      }
+
+      if (i <= iStart) i = iStart + 2;
     }
-    return sx.sx;
+
+    return sx.bitCount > 0 ? sx.sx : null;
   }
 
   analyse() {
@@ -588,12 +609,29 @@ class PulseSpaceIndex {
     // based on trailing space / signal timeout detect repeated packages first/last may be partial
     // this.detectRepeatedPackages();
     this.detectPS01Values();
-    debug('ps01f', this.ps01f, this.ps01f.slice(0,4), this.psi.length);
-    if (tryMan && this.ps01f.slice(0,4) === '0011' && this.psi.length >= 140) {
-      this.tryManchester(this.psi, this.ps01f);
+    debug('ps01f', this.ps01f, this.ps01f.slice(0, 4), this.psi.length);
+    if (tryMan && this.ps01f.slice(0, 4) === '0011' && this.psi.length >= 40) {
+      // Manchester requires a 2:1 timing ratio between long and short durations.
+      // Filter out PWM signals where the ratio is closer to 3:1 or higher.
+      let isManchester = (this.micros === null); // if no timing data, try anyway
+      if (this.micros !== null) {
+        const p0idx = parseInt(this.ps01f[0], 16);
+        const p1idx = parseInt(this.ps01f[2], 16);
+        if (this.micros.length > p1idx && this.micros[p0idx] > 0) {
+          const ratio = this.micros[p1idx] / this.micros[p0idx];
+          isManchester = (ratio >= 1.7 && ratio <= 2.3);
+        }
+      }
+      if (isManchester) {
+        const manResult = this.tryManchester(this.psi, this.ps01f);
+        if (manResult) {
+          this.psx = manResult;
+          this.print();
+          return;
+        }
+      }
     }
     this.psx = this.psix(this.psi, this.ps01f);
-    // debug('psx', this.psix(this.psi));
     this.print();
   }
 
