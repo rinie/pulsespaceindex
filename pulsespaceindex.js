@@ -783,93 +783,104 @@ class PulseSpaceIndex {
   }
 }
 
-if (process.argv[2].toLowerCase().endsWith('.js')) { // js module
-  debug(`Samples: ${process.argv[2]}`);
+module.exports = PulseSpaceIndex;
 
-  // eslint-disable-next-line import/no-dynamic-require,global-require
-  const samples = require(process.argv[2]);
-  for (let j = 0; j < samples.samples.length; j++) {
-    const sample = samples.samples[j];
-    debugv(sample);
-    if (sample.psi !== undefined && sample.pulseLengths === undefined) { // broadlink samples
-      var psi = new PulseSpaceIndex(sample.psi, sample.micros, sample.frameCount, `broadlink:${sample.signalType}:${sample.comment}`);
-    } else if (sample.pulseLengths !== undefined) { // pimatic samples
-      const brand = (sample.brands !== undefined) ? (`pimatic:${sample.brands}`).split(',', 1) : 'pimatic';
-      var psi = new PulseSpaceIndex(sample.psi, sample.pulseLengths, 1, brand);
-    } else { // arduino samples
-      let { ps } = sample;
-      const { p } = sample;
-      const { s } = sample;
-      if (ps === undefined) {
-        if (p.length > 0) {
-          ps = '';
-          for (let i = 0; i < p.length; i++) {
-            ps = `${ps + p[i]}0`;
-          }
-        } else {
-          ps = '';
-          for (let i = 0; i < s.length; i++) {
-            ps = `${ps}0${s[i]}`;
+if (require.main === module) {
+  const path = require('path');
+  const inputFile = process.argv[2];
+  if (!inputFile) {
+    console.error('Usage: node pulsespaceindex.js <samples.js|samples.txt|samples.csv>');
+    process.exit(1);
+  }
+  const inputPath = path.resolve(inputFile);
+
+  if (inputFile.toLowerCase().endsWith('.js')) { // js module
+    debug(`Samples: ${inputFile}`);
+
+    // eslint-disable-next-line import/no-dynamic-require,global-require
+    const samples = require(inputPath);
+    for (let j = 0; j < samples.samples.length; j++) {
+      const sample = samples.samples[j];
+      debugv(sample);
+      let psi;
+      if (sample.psi !== undefined && sample.pulseLengths === undefined) { // broadlink samples
+        psi = new PulseSpaceIndex(sample.psi, sample.micros, sample.frameCount, `broadlink:${sample.signalType}:${sample.comment}`);
+      } else if (sample.pulseLengths !== undefined) { // pimatic samples
+        const brand = (sample.brands !== undefined) ? (`pimatic:${sample.brands}`).split(',', 1) : 'pimatic';
+        psi = new PulseSpaceIndex(sample.psi, sample.pulseLengths, 1, brand);
+      } else { // arduino samples
+        let { ps } = sample;
+        const { p } = sample;
+        const { s } = sample;
+        if (ps === undefined) {
+          if (p.length > 0) {
+            ps = '';
+            for (let i = 0; i < p.length; i++) {
+              ps = `${ps + p[i]}0`;
+            }
+          } else {
+            ps = '';
+            for (let i = 0; i < s.length; i++) {
+              ps = `${ps}0${s[i]}`;
+            }
           }
         }
+        if (sample.signalType === undefined) {
+          sample.signalType = 'ook433';
+        }
+        psi = new PulseSpaceIndex(ps, sample.avgMicro, sample.frameCount, `NodoDueRkr:${sample.signalType}`);
       }
-      if (sample.signalType === undefined) {
-        sample.signalType = 'ook433';
-      }
-      var psi = new PulseSpaceIndex(ps, sample.avgMicro, sample.frameCount, `NodoDueRkr:${sample.signalType}`);
+      psi.analyse();
+      debug(psi);
     }
-    psi.analyse();
-    debug(psi);
-  }
-} else { // assume csv or text
-  debug(`Samples csvtxt: ${process.argv[2]}`);
-  let lc = 0;
-  const rl = readline.createInterface({
-    input: fs.createReadStream(`./${process.argv[2]}`),
-    crlfDelay: Infinity,
-  });
+  } else { // assume csv or text
+    debug(`Samples csvtxt: ${inputFile}`);
+    let lc = 0;
+    const rl = readline.createInterface({
+      input: fs.createReadStream(inputPath),
+      crlfDelay: Infinity,
+    });
 
-  rl.on('line', (line) => {
-    if (line.includes('#')) {
-      // comment
-      debugv('comment ', line);
-    } else if (line.includes('Pulses=')) {
-      // input like 20;B9;DEBUG;Pulses=132;Pulses(uSec)=200,2550,150,...;
-      // match )= until eol or ; split on ,
-      const pulses = Array.from(line.match(/\)=([^;]+)/)[1].split(','), x => Number(x));
-      const psi = new PulseSpaceIndex(null);
-      psi.microsToPsi(pulses, `rflink:${line}`, `rflink:${lc + 1}`);
-      psi.analyse();
-      debug(psi);
-    } else if (line.includes('AA B1 ')) {
-      // Tasmota Portisch Sonoff RFbridge v212:22:52.999 RSL: RESULT = {"Time":"2021-08-18T12:22:52","RfRaw":{"Data":"AA B1 03 0172 041A 2AF8 01010110010101010101011001010101010101100110010102 55"}}
-      const ptData = line.match(/AA B1 .*55/)[0].split(' ');
-      const nrPulseLengths = Number(ptData[2]);
-      const pulseLengths = Array.from(ptData.slice(3, 3 + nrPulseLengths), x => parseInt(x, 16));
-      const ppsi = ptData[3 + nrPulseLengths];
-      // portisch does not have buckets in time sequence so convert to pulses and use microsToPsi...
-      // Als F protection
-      const pulses = Array.from(ppsi, x => (((parseInt(x, 16) & 0x07) < pulseLengths.length) ? pulseLengths[parseInt(x, 16) & 0x07] : (pulseLengths.length - 1)));
-      //debugv('Tasmota Portisch ', ptData, pulseLengths, pulses);
-      //var psi = new PulseSpaceIndex(ppsi, pulseLengths, 1, 'Tasmota Portisch Sonoff RFbridge');
-      const psi = new PulseSpaceIndex(null);
-      psi.microsToPsi(pulses, line.match(/AA B1 .*55/), `Portisch Sorted:${lc + 1}`);
-      psi.analyse();
-      debug(psi);
-    } else if (line.includes('RFLink')) {
-      debugv('Rflink Domoticzlog ', line);
-    } else {
-      // input like ev1527 253 759 759 253 759...
-      // split on space skip first element
-      const pulsess = line.split(' ');
-      const protocol = pulsess[0];
-      pulsess.shift();
-      const pulses = Array.from(pulsess, x => Number(x));
-      const psi = new PulseSpaceIndex(null);
-      psi.microsToPsi(pulses, `pilight:${line}`, `pilight:${protocol}`);
-      psi.analyse();
-      debug(psi);
-    }
-    lc++;
-  });
+    rl.on('line', (line) => {
+      if (line.includes('#')) {
+        // comment
+        debugv('comment ', line);
+      } else if (line.includes('Pulses=')) {
+        // input like 20;B9;DEBUG;Pulses=132;Pulses(uSec)=200,2550,150,...;
+        // match )= until eol or ; split on ,
+        const pulses = Array.from(line.match(/\)=([^;]+)/)[1].split(','), x => Number(x));
+        const psi = new PulseSpaceIndex(null);
+        psi.microsToPsi(pulses, `rflink:${line}`, `rflink:${lc + 1}`);
+        psi.analyse();
+        debug(psi);
+      } else if (line.includes('AA B1 ')) {
+        // Tasmota Portisch Sonoff RFbridge v212:22:52.999 RSL: RESULT = {"Time":"2021-08-18T12:22:52","RfRaw":{"Data":"AA B1 03 0172 041A 2AF8 01010110010101010101011001010101010101100110010102 55"}}
+        const ptData = line.match(/AA B1 .*55/)[0].split(' ');
+        const nrPulseLengths = Number(ptData[2]);
+        const pulseLengths = Array.from(ptData.slice(3, 3 + nrPulseLengths), x => parseInt(x, 16));
+        const ppsi = ptData[3 + nrPulseLengths];
+        // portisch does not have buckets in time sequence so convert to pulses and use microsToPsi...
+        // Als F protection
+        const pulses = Array.from(ppsi, x => (((parseInt(x, 16) & 0x07) < pulseLengths.length) ? pulseLengths[parseInt(x, 16) & 0x07] : (pulseLengths.length - 1)));
+        const psi = new PulseSpaceIndex(null);
+        psi.microsToPsi(pulses, line.match(/AA B1 .*55/), `Portisch Sorted:${lc + 1}`);
+        psi.analyse();
+        debug(psi);
+      } else if (line.includes('RFLink')) {
+        debugv('Rflink Domoticzlog ', line);
+      } else {
+        // input like ev1527 253 759 759 253 759...
+        // split on space skip first element
+        const pulsess = line.split(' ');
+        const protocol = pulsess[0];
+        pulsess.shift();
+        const pulses = Array.from(pulsess, x => Number(x));
+        const psi = new PulseSpaceIndex(null);
+        psi.microsToPsi(pulses, `pilight:${line}`, `pilight:${protocol}`);
+        psi.analyse();
+        debug(psi);
+      }
+      lc++;
+    });
+  }
 }
