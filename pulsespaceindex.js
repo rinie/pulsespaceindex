@@ -599,6 +599,124 @@ class PulseSpaceIndex {
     return sx.bitCount > 0 ? sx.sx : null;
   }
 
+  tryDifferentialManchester(s, ps01f) {
+    // Decode Differential Manchester (biphase mark) encoded RF signal from PSI.
+    // Rules:
+    //   - A transition ALWAYS occurs at the clock boundary (start of each bit).
+    //   - Bit 1: no additional mid-bit transition  (same-polarity half-period pair)
+    //   - Bit 0: additional mid-bit transition     (different-polarity pair)
+    // Distinguishable from standard Manchester because bit-1 produces same-polarity
+    // pairs (H,H or L,L) which standard Manchester never produces in its data section.
+    if (ps01f.slice(0, 4) !== '0011') {
+      return null;
+    }
+
+    const dataMax = 1;
+    const sx = { sx: `${ps01f}:dm:`, hexMode: false, constantMode: false, bitCount: 0 };
+    let i = 0;
+    const len = s.length;
+
+    while (i < len) {
+      const iStart = i;
+
+      // Consume header section
+      let header = '';
+      while (i < len - 1) {
+        const p = parseInt(s[i], 16);
+        const sp = parseInt(s[i + 1], 16);
+        if (p <= dataMax && sp <= dataMax) break;
+        header += s[i++];
+        header += s[i++];
+      }
+      if (header.length > 0) {
+        this.sxAdd(sx, header);
+      }
+
+      if (i >= len - 1) break;
+
+      // Expand PSI data pairs to flat half-period sequence (same as tryManchester)
+      const half = [];
+      while (i < len - 1) {
+        const p = parseInt(s[i], 16);
+        const sp = parseInt(s[i + 1], 16);
+        if (p > dataMax || sp > dataMax) break;
+        half.push(true);
+        if (p === 1) half.push(true);
+        half.push(false);
+        if (sp === 1) half.push(false);
+        i += 2;
+      }
+      if (i < len) {
+        const p = parseInt(s[i], 16);
+        if (p <= dataMax) {
+          half.push(true);
+          if (p === 1) half.push(true);
+          i++;
+        }
+      }
+
+      if (half.length < 4) {
+        if (i <= iStart) i = iStart + 2;
+        continue;
+      }
+
+      // Skip preamble: differential Manchester 1-bits produce same-polarity pairs
+      // (H,H or L,L). Advance past leading same-polarity pairs.
+      let pre = 0;
+      while (pre + 1 < half.length && half[pre] === half[pre + 1]) {
+        pre += 2;
+      }
+
+      // Decode bits. At each bit boundary (every 2 half-periods) after the first,
+      // the clock transition is mandatory: half[pos] must differ from half[pos-1].
+      const bits = [];
+      let pos = pre;
+      while (pos + 1 < half.length) {
+        if (pos > pre && half[pos] === half[pos - 1]) {
+          break; // missing clock boundary transition — not valid differential Manchester
+        }
+        // Same-polarity pair = no mid-bit transition = bit 1
+        // Different-polarity pair = mid-bit transition = bit 0
+        bits.push(half[pos] === half[pos + 1] ? 1 : 0);
+        pos += 2;
+      }
+
+      debugv('tryDifferentialManchester preamble', pre / 2, 'bits', bits.length, 'halfPeriods', half.length);
+
+      if (bits.length > 0) {
+        sx.bitCount += bits.length;
+        let nibble = '';
+        for (let b = 0; b < bits.length; b++) {
+          nibble += bits[b];
+          if (nibble.length === 4) {
+            this.sxAdd(sx, parseInt(nibble, 2).toString(16), false, true);
+            nibble = '';
+          }
+        }
+        if (nibble.length > 0) {
+          this.sxAdd(sx, nibble);
+        }
+      }
+
+      // Consume trailer
+      let trailer = '';
+      while (i < len - 1) {
+        const p = parseInt(s[i], 16);
+        const sp = parseInt(s[i + 1], 16);
+        if (p <= dataMax && sp <= dataMax) break;
+        trailer += s[i++];
+        trailer += s[i++];
+      }
+      if (trailer.length > 0) {
+        this.sxAdd(sx, trailer);
+      }
+
+      if (i <= iStart) i = iStart + 2;
+    }
+
+    return sx.bitCount > 0 ? sx.sx : null;
+  }
+
   analyse() {
     const { psi } = this;
     this.countPulseSpace();
@@ -623,7 +741,8 @@ class PulseSpaceIndex {
         }
       }
       if (isManchester) {
-        const manResult = this.tryManchester(this.psi, this.ps01f);
+        const manResult = this.tryManchester(this.psi, this.ps01f)
+          || this.tryDifferentialManchester(this.psi, this.ps01f);
         if (manResult) {
           this.psx = manResult;
           this.print();
@@ -787,11 +906,42 @@ module.exports = PulseSpaceIndex;
 
 if (require.main === module) {
   const path = require('path');
+  // eslint-disable-next-line global-require
+  const { version } = require('./package.json');
   const inputFile = process.argv[2];
-  if (!inputFile) {
-    console.error('Usage: node pulsespaceindex.js <samples.js|samples.txt|samples.csv>');
-    process.exit(1);
+
+  if (inputFile === '--version' || inputFile === '-v') {
+    console.log(version);
+    process.exit(0);
   }
+
+  if (!inputFile || inputFile === '--help' || inputFile === '-h') {
+    console.log(`pulsespaceindex v${version}
+Analyse OOK 433 MHz RF pulse-space signals.
+
+Usage:
+  node pulsespaceindex.js <input>
+
+Input formats:
+  samples.js   JS module exporting { samples: [...] }
+               (broadlink / pimatic / arduino / nodo formats)
+  data.txt     Space-separated lines: <protocol> <µs1> <µs2> ...
+  data.csv     One of:
+                 RFLink   Pulses(uSec)=200,2550,...
+                 Tasmota  AA B1 <nr> <buckets...> <data> 55
+                 pilight  <protocol> <µs1> <µs2> ...
+
+Options:
+  -h, --help     Show this help
+  -v, --version  Show version
+
+Debug:
+  DEBUG=psi  node pulsespaceindex.js <input>   basic output
+  DEBUG=psiv node pulsespaceindex.js <input>   verbose
+  DEBUG=*    node pulsespaceindex.js <input>   all`);
+    process.exit(inputFile ? 0 : 1);
+  }
+
   const inputPath = path.resolve(inputFile);
 
   if (inputFile.toLowerCase().endsWith('.js')) { // js module
