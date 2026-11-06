@@ -2,22 +2,50 @@
 
 All notable changes to pulsespaceindex are documented here.
 
-## [Unreleased] - 2026-04-16
+## [1.1.0] - 2026-11-06
 
 ### Added
 - **Manchester encoding decoder** (`tryManchester`): fully implements G.E. Thomas
   convention (H→L = bit 1, L→H = bit 0) by expanding PSI pairs to a flat
   half-period sequence, stripping the leading preamble, then decoding bit pairs.
   Output is tagged with `:m:` in the `psx` field.
+- **Differential Manchester decoder** (`tryDifferentialManchester`): biphase-mark
+  encoding — mandatory clock-boundary transition, same-polarity pair = bit 1,
+  different-polarity pair = bit 0. Tried as fallback when standard Manchester
+  returns null. Output tagged with `:dm:`.
 - 2:1 timing ratio guard in `analyse()`: Manchester decoding only triggers when
   `micros[1] / micros[0]` is between 1.7 and 2.3, preventing false positives on
   PWM signals with 3:1 ratios (ev1527, elro, sc2262, etc.).
 - Minimum PSI length threshold lowered from 140 to 40 symbols to support shorter
   Manchester packets.
+- **`format()` method**: returns the uniform output string
+  (`<count> [<micros>] '<psx>' <signalType>`) without side-effects, making
+  programmatic use and testing straightforward. `print()` now delegates to it.
+- **`tryMan` constructor option**: 5th parameter (default `true`) replaces the
+  module-level constant, allowing per-instance Manchester decoding control.
+- **ES6 module export**: `module.exports = PulseSpaceIndex` added so the file can
+  be `require()`d as a library without crashing on import.
+- **CLI improvements**: `--help`/`-h` and `--version`/`-v` flags; input path
+  resolved with `path.resolve()` so relative paths work from any cwd.
+- **Unit tests** (`test.js`): 18 tests via Node's built-in `node:test` covering
+  constructor, `countPulseSpace`, `microsToPsi`, `format`, `analyse`,
+  `tryManchester`, and `tryDifferentialManchester`.
+- **CI** (`.github/workflows/ci.yml`): runs `npm test` on Node 22 and 24 for
+  every push and pull request.
+- **JSDoc** on all public API members: class, constructor, `microsToPsi`,
+  `analyse`, `format`, `print`, `tryManchester`, `tryDifferentialManchester`.
 
 ### Changed
-- `tryMan` flag enabled (`true`); Manchester result is now used as `psx` when
-  decoding succeeds, replacing the generic `psix` path for qualifying signals.
+- `tryMan` flag enabled (`true`) by default; Manchester result is used as `psx`
+  when decoding succeeds, replacing the generic `psix` path for qualifying signals.
+- CI matrix updated to Node 22.x (Maintenance LTS) and 24.x (Active LTS),
+  dropping EOL 18.x and 20.x.
+
+### Security
+- Bumped `debug` 3.x → 4.4.0.
+- Bumped `eslint` 5.x → 8.57.0 and `eslint-config-airbnb-base` 13.x → 15.0.0.
+- Bumped `js-yaml` 4.1.1 → 4.3.2 (CPU DoS via YAML merge sequences,
+  back-ported from v5).
 
 ---
 
