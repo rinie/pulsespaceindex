@@ -21,11 +21,10 @@ const ps01f0 = 0;
 const ps01f1 = 2;
 const ps01fFrameHT = 4;
 const ps01fLength = 6; // enable for ... < ps01fLength; += psixPulseSpace loops
-const tryMan = true;
-
 class PulseSpaceIndex {
-  constructor(psi, micros = null, frameCount = 1, signalType = 'ook433') {
+  constructor(psi, micros = null, frameCount = 1, signalType = 'ook433', tryMan = true) {
     this.signalType = signalType;
+    this.tryMan = tryMan;
     this.frameCount = frameCount;
     this.count = (psi !== null) ? psi.length : null;
     this.micros = micros;
@@ -353,21 +352,16 @@ class PulseSpaceIndex {
     this.ps01f = ps01f.join('');
   }
 
-  print() { // uniform output format
-    // console.log('tja', this);
-    const sep = ';';
-    const newOutputFormat = true;
-    if (newOutputFormat) {
-      if (this.micros !== null) {
-        console.log(this.count.toString(), this.micros.toString(), `'${this.psx}'`, (this.signalType).toString().replace(/ /g, '_'));
-      } else {
-        console.log(this.count.toString(), `'${this.psx}'`, (this.signalType).toString().replace(/ /g, '_'));
-      }
-    } else if (this.micros !== null) {
-      console.log(this.count.toString(), sep, this.micros.length, sep, ...this.micros, sep, `'${this.psi}'`, sep, (this.signalType).toString().replace(/ /g, '_'));
-    } else {
-      console.log(this.count.toString(), sep, `'${this.psi}'`, sep, (this.signalType).toString().replace(/ /g, '_'));
+  format() { // return uniform output string
+    const sigType = this.signalType.toString().replace(/ /g, '_');
+    if (this.micros !== null) {
+      return [this.count.toString(), this.micros.toString(), `'${this.psx}'`, sigType].join(' ');
     }
+    return [this.count.toString(), `'${this.psx}'`, sigType].join(' ');
+  }
+
+  print() { // uniform output format
+    console.log(this.format());
   }
 
   sxAdd(sx, data, constantMode = false, hexMode = false) {
@@ -728,7 +722,7 @@ class PulseSpaceIndex {
     // this.detectRepeatedPackages();
     this.detectPS01Values();
     debug('ps01f', this.ps01f, this.ps01f.slice(0, 4), this.psi.length);
-    if (tryMan && this.ps01f.slice(0, 4) === '0011' && this.psi.length >= 40) {
+    if (this.tryMan && this.ps01f.slice(0, 4) === '0011' && this.psi.length >= 40) {
       // Manchester requires a 2:1 timing ratio between long and short durations.
       // Filter out PWM signals where the ratio is closer to 3:1 or higher.
       let isManchester = (this.micros === null); // if no timing data, try anyway
