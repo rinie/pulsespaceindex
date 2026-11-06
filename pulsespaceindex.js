@@ -21,7 +21,27 @@ const ps01f0 = 0;
 const ps01f1 = 2;
 const ps01fFrameHT = 4;
 const ps01fLength = 6; // enable for ... < ps01fLength; += psixPulseSpace loops
+/**
+ * Analyses OOK (On-Off Keying) RF pulse/space signals.
+ *
+ * A signal is represented as a PSI string: a hex string where even positions
+ * hold pulse timing-bucket indices and odd positions hold space indices.
+ * Index 0 = short (T), index 1 = long (2T), index 2+ = header/trailer.
+ *
+ * Typical workflow:
+ *   const p = new PulseSpaceIndex(null);
+ *   p.microsToPsi(rawPulses, 'label', 'ook433');
+ *   p.analyse();
+ *   console.log(p.psx);  // e.g. "000100:x5a3f"
+ */
 class PulseSpaceIndex {
+  /**
+   * @param {string|null} psi        Hex PSI string, or null when using microsToPsi.
+   * @param {number[]|null} micros   Timing bucket values in µs (index → duration).
+   * @param {number} frameCount      Number of repeated frames in the signal.
+   * @param {string} signalType      Label for the signal source (e.g. 'ook433').
+   * @param {boolean} tryMan         Enable Manchester / Differential Manchester decoding.
+   */
   constructor(psi, micros = null, frameCount = 1, signalType = 'ook433', tryMan = true) {
     this.signalType = signalType;
     this.tryMan = tryMan;
@@ -352,6 +372,11 @@ class PulseSpaceIndex {
     this.ps01f = ps01f.join('');
   }
 
+  /**
+   * Return a formatted summary string for this signal.
+   * Format: `<count> [<micros>] '<psx>' <signalType>`
+   * @returns {string}
+   */
   format() { // return uniform output string
     const sigType = this.signalType.toString().replace(/ /g, '_');
     if (this.micros !== null) {
@@ -360,6 +385,7 @@ class PulseSpaceIndex {
     return [this.count.toString(), `'${this.psx}'`, sigType].join(' ');
   }
 
+  /** Print the format() summary to stdout. */
   print() { // uniform output format
     console.log(this.format());
   }
@@ -473,6 +499,14 @@ class PulseSpaceIndex {
     return sx.sx;
   }
 
+  /**
+   * Attempt Manchester decoding (G.E. Thomas convention).
+   * H→L mid-bit transition = bit 1; L→H = bit 0.
+   * Requires ps01f[0..3] === '0011' (2:1 timing ratio).
+   * @param {string} s      PSI string to decode.
+   * @param {string} ps01f  6-char PS01 descriptor from detectPS01Values().
+   * @returns {string|null} Tagged result `"<ps01f>:m:<hex>"`, or null if not applicable.
+   */
   tryManchester(s, ps01f) {
     // Decode Manchester-encoded RF signal from PSI representation.
     // Manchester encoding uses two timing values: T (short, index 0) and 2T (long, index 1).
@@ -593,6 +627,15 @@ class PulseSpaceIndex {
     return sx.bitCount > 0 ? sx.sx : null;
   }
 
+  /**
+   * Attempt Differential Manchester (biphase mark) decoding.
+   * Clock boundary transition is always present; same-polarity pair = bit 1,
+   * different-polarity pair = bit 0.
+   * Requires ps01f[0..3] === '0011'. Tried as fallback when tryManchester returns null.
+   * @param {string} s      PSI string to decode.
+   * @param {string} ps01f  6-char PS01 descriptor from detectPS01Values().
+   * @returns {string|null} Tagged result `"<ps01f>:dm:<hex>"`, or null if not applicable.
+   */
   tryDifferentialManchester(s, ps01f) {
     // Decode Differential Manchester (biphase mark) encoded RF signal from PSI.
     // Rules:
@@ -711,6 +754,12 @@ class PulseSpaceIndex {
     return sx.bitCount > 0 ? sx.sx : null;
   }
 
+  /**
+   * Run the full analysis pipeline on this.psi.
+   * Populates this.counts, this.ps01f, and this.psx, then calls print().
+   * When tryMan is true and timing qualifies (2:1 ratio, length ≥ 40),
+   * tries Manchester then Differential Manchester before falling back to psix.
+   */
   analyse() {
     const { psi } = this;
     this.countPulseSpace();
@@ -748,6 +797,15 @@ class PulseSpaceIndex {
     this.print();
   }
 
+  /**
+   * Convert a raw microsecond pulse/space array into a PSI string.
+   * Clusters close timing values into up to 16 buckets, then sets
+   * this.psi, this.micros, this.count, and this.signalType.
+   * Call analyse() afterwards to decode.
+   * @param {number[]} pulses     Alternating pulse/space durations in µs.
+   * @param {string}   comment    Debug label (not stored).
+   * @param {string}   signalType Label stored in this.signalType.
+   */
   microsToPsi(pulses, comment, signalType) { // convert pulseSpace micro signal to psi
     debugm('microsToPsi ', comment);
     const repeat = 0;
