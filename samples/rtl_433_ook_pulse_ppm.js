@@ -1,6 +1,6 @@
 module.exports = {
-r_devices:[
-/** acurite.c
+  r_devices: [
+    /** acurite.c
     Acurite weather stations and temperature / humidity sensors
 
     Copyright (c) 2015, Jens Jenson, Helge Weissig, David Ray Thompson, Robert Terzi
@@ -22,19 +22,19 @@ r_devices:[
 #define ACURITE_5N1_BITLEN        64
 #define ACURITE_6045_BITLEN        72
 */
-/* r_device acurite_rain_896 =  */{
-    name:           "Acurite 896 Rain Gauge",
-    modulation:     "OOK_PULSE_PPM",
-    short_width:    1000,
-    long_width:     2000,
-    gap_limit:      3500,
-    reset_limit:    5000,
-    decodefn:      "acurite_rain_896_decode",
-// Disabled by default due to false positives on oregon scientific v1 protocol see issue #353
-    disabled:       1,
-    fields:         "acurite_rain_gauge_output_fields",
-},
-/*
+    /* r_device acurite_rain_896 =  */{
+      name: 'Acurite 896 Rain Gauge',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 1000,
+      long_width: 2000,
+      gap_limit: 3500,
+      reset_limit: 5000,
+      decodefn: 'acurite_rain_896_decode',
+      // Disabled by default due to false positives on oregon scientific v1 protocol see issue #353
+      disabled: 1,
+      fields: 'acurite_rain_gauge_output_fields',
+    },
+    /*
 static char *acurite_th_output_fields[] = {
     "model",
     "id",
@@ -45,18 +45,18 @@ static char *acurite_th_output_fields[] = {
     NULL,
 },
 */
-/* r_device acurite_th =  */{
-    name:           "Acurite 609TXC Temperature and Humidity Sensor",
-    modulation:     "OOK_PULSE_PPM",
-    short_width:    1000,
-    long_width:     2000,
-    gap_limit:      3000,
-    reset_limit:    10000,
-    decodefn:      "acurite_th_decode",
-    disabled:       0,
-    fields:         "acurite_th_output_fields",
-},
-/*
+    /* r_device acurite_th =  */{
+      name: 'Acurite 609TXC Temperature and Humidity Sensor',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 1000,
+      long_width: 2000,
+      gap_limit: 3000,
+      reset_limit: 10000,
+      decodefn: 'acurite_th_decode',
+      disabled: 0,
+      fields: 'acurite_th_output_fields',
+    },
+    /*
  * For Acurite 592 TXR Temp/Humidity, but
  * Should match Acurite 592TX, 5-n-1, etc.
  * /
@@ -85,20 +85,20 @@ static char *acurite_txr_output_fields[] = {
     NULL,
 },
 */
-/* r_device acurite_txr =  */{
-    name:           "Acurite 592TXR Temp/Humidity, 5n1 Weather Station, 6045 Lightning",
-    modulation:     "OOK_PULSE_PWM",
-    short_width:    220,  // short pulse is 220 us + 392 us gap
-    long_width:     408,  // long pulse is 408 us + 204 us gap
-    sync_width:     620,  // sync pulse is 620 us + 596 us gap
-    gap_limit:      500,  // longest data gap is 392 us, sync gap is 596 us
-    reset_limit:    4000, // packet gap is 2192 us
-    decodefn:      "acurite_txr_decode",
-    disabled:       0,
-    fields:         "acurite_txr_output_fields",
-},
+    /* r_device acurite_txr =  */{
+      name: 'Acurite 592TXR Temp/Humidity, 5n1 Weather Station, 6045 Lightning',
+      modulation: 'OOK_PULSE_PWM',
+      short_width: 220, // short pulse is 220 us + 392 us gap
+      long_width: 408, // long pulse is 408 us + 204 us gap
+      sync_width: 620, // sync pulse is 620 us + 596 us gap
+      gap_limit: 500, // longest data gap is 392 us, sync gap is 596 us
+      reset_limit: 4000, // packet gap is 2192 us
+      decodefn: 'acurite_txr_decode',
+      disabled: 0,
+      fields: 'acurite_txr_output_fields',
+    },
 
-/*
+    /*
  * Acurite 00986 Refrigerator / Freezer Thermometer
  *
  * Temperature only, Pulse Position
@@ -118,19 +118,19 @@ static char *acurite_986_output_fields[] = {
     NULL,
 },
 */
-/* r_device acurite_986 =  */{
-    name:           "Acurite 986 Refrigerator / Freezer Thermometer",
-    modulation:     "OOK_PULSE_PPM",
-    short_width:    520,
-    long_width:     880,
-    gap_limit:      1280,
-    reset_limit:    4000,
-    decodefn:      "acurite_986_decode",
-    disabled:       0,
-    fields:         "acurite_986_output_fields",
-},
+    /* r_device acurite_986 =  */{
+      name: 'Acurite 986 Refrigerator / Freezer Thermometer',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 520,
+      long_width: 880,
+      gap_limit: 1280,
+      reset_limit: 4000,
+      decodefn: 'acurite_986_decode',
+      disabled: 0,
+      fields: 'acurite_986_output_fields',
+    },
 
-/*
+    /*
  * Acurite 00606TX Tower Sensor
  *
  * Temperature only
@@ -146,27 +146,27 @@ static char *acurite_606_output_fields[] = {
     NULL,
 },
 */
-/* r_device acurite_606 =  */{
-    name:           "Acurite 606TX Temperature Sensor",
-    // actually tests/acurite/02/gfile002.cu8, check this
-    //modulation:     "OOK_PULSE_PWM",
-    //short_width:    576,
-    //long_width:     1076,
-    //gap_limit:      1200,
-    //reset_limit:    12000,
-    modulation:     "OOK_PULSE_PPM",
-    short_width:    2000,
-    long_width:     4000,
-    gap_limit:      7000,
-    reset_limit:    10000,
-    decodefn:      "acurite_606_decode",
-    disabled:       0,
-    fields:         "acurite_606_output_fields",
-},
-/*** @file
+    /* r_device acurite_606 =  */{
+      name: 'Acurite 606TX Temperature Sensor',
+      // actually tests/acurite/02/gfile002.cu8, check this
+      // modulation:     "OOK_PULSE_PWM",
+      // short_width:    576,
+      // long_width:     1076,
+      // gap_limit:      1200,
+      // reset_limit:    12000,
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 2000,
+      long_width: 4000,
+      gap_limit: 7000,
+      reset_limit: 10000,
+      decodefn: 'acurite_606_decode',
+      disabled: 0,
+      fields: 'acurite_606_output_fields',
+    },
+    /** * @file
     AlectoV1 Weather Sensor protocol.
 */
-/** @fn int alectov1_callback(r_device *decoder, bitbuffer_t *bitbuffer)
+    /** @fn int alectov1_callback(r_device *decoder, bitbuffer_t *bitbuffer)
 AlectoV1 Weather Sensor decoder.
 Documentation also at http://www.tfd.hu/tfdhu/files/wsprotocol/auriol_protocol_v20.pdf
 
@@ -217,7 +217,6 @@ Format for Windspeed:
 - W: 8 bit Windspeed  (bitvalue * 0.2 m/s, correction for webapp = 3600/1000 * 0.2 * 100 = 72)
 - C: 4 bit Checksum
 
-
 Format for Winddirection & Windgust:
 
     IIIIIIII BMMP 111D DDDD DDDD GGGGGGGG CCCC
@@ -231,18 +230,18 @@ Format for Winddirection & Windgust:
 - G: 8 bit Windgust (bitvalue * 0.2 m/s, correction for webapp = 3600/1000 * 0.2 * 100 = 72)
 - C: 4 bit Checksum
 */
-/* r_device alectov1 =  */{
-    name:           "AlectoV1 Weather Sensor (Alecto WS3500 WS4500 Ventus W155/W044 Oregon)",
-    modulation:     "OOK_PULSE_PPM",
-    short_width:    2000,
-    long_width:     4000,
-    gap_limit:      7000,
-    reset_limit:    10000,
-    decodefn:      "alectov1_callback",
-    disabled:       0,
-    fields: "output_fields",
-},
-/** @file
+    /* r_device alectov1 =  */{
+      name: 'AlectoV1 Weather Sensor (Alecto WS3500 WS4500 Ventus W155/W044 Oregon)',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 2000,
+      long_width: 4000,
+      gap_limit: 7000,
+      reset_limit: 10000,
+      decodefn: 'alectov1_callback',
+      disabled: 0,
+      fields: 'output_fields',
+    },
+    /** @file
     Ambient Weather TX-8300 (also sold as TFA 30.3211.02).
 
     Copyright (C) 2018 ionum-projekte and Roger
@@ -252,7 +251,7 @@ Format for Winddirection & Windgust:
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
 */
-/** @fn int ambientweather_tx8300_callback(r_device *decoder, bitbuffer_t *bitbuffer)
+    /** @fn int ambientweather_tx8300_callback(r_device *decoder, bitbuffer_t *bitbuffer)
 Ambient Weather TX-8300 (also sold as TFA 30.3211.02).
 
 1970us pulse with variable gap (third pulse 3920 us).
@@ -287,18 +286,18 @@ Payload format (32 bits):
 
 The Checksum seems to covers the 4 data bytes and is something like Fletcher-8.
 */
-/* r_device ambientweather_tx8300 =  */{
-        name:        "Ambient Weather TX-8300 Temperature/Humidity Sensor",
-        modulation:  "OOK_PULSE_PPM",
-        short_width: 2000,
-        long_width:  4000,
-        gap_limit:   6500,
-        reset_limit: 8000,
-        decodefn:   "ambientweather_tx8300_callback",
-        disabled:    0,
-        fields:      "output_fields",
-},
-/** @file
+    /* r_device ambientweather_tx8300 =  */{
+      name: 'Ambient Weather TX-8300 Temperature/Humidity Sensor',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 2000,
+      long_width: 4000,
+      gap_limit: 6500,
+      reset_limit: 8000,
+      decodefn: 'ambientweather_tx8300_callback',
+      disabled: 0,
+      fields: 'output_fields',
+    },
+    /** @file
     Auriol AFW 2 A1 sensor.
 
     Copyright (C) 2019 LiberationFrequency
@@ -309,21 +308,24 @@ The Checksum seems to covers the 4 data bytes and is something like Fletcher-8.
     (at your option) any later version.
 */
 
-/**
+    /**
 Lidl Auriol AFW 2 A1 sensor (IAN 311588).
 
 Technical data for the external sensor:
-- Temperature measuring range/accuracy:       -20 to +65°C (-4 to +149°F) / ±1.5 °C (± 2.7 °F)
-- Relative humidity measuring range/accuracy: 20 to 99% / ± 5%
+- Temperature measuring range/accuracy:       -20 to +65ï¿½C (-4 to +149ï¿½F) / ï¿½1.5 ï¿½C (ï¿½ 2.7 ï¿½F)
+- Relative humidity measuring range/accuracy: 20 to 99% / ï¿½ 5%
 - Relative humidity resolution:               1%
-- Transmission frequencies:                   433 MHz (ch1:~433919300,ch2:~433915200,ch3:~433918000, various?)
+- Transmission frequencies:                   433 MHz
+                                              (ch1:~433919300,ch2:~433915200,
+                                               ch3:~433918000, various?)
 - Transmission output:                        < 10 dBm / < 10 mW
 
 The ID is retained even if the batteries are changed.
 The device has three channels and a transmit button.
 
 Data layout:
-The sensor transmits 12 identical messages of 36 bits in a single package each ~60 seconds, depending on the temperature.
+The sensor transmits 12 identical messages of 36 bits in a single package each ~60 seconds,
+depending on the temperature.
 e.g.:
 
     [00] {36} 90 80 ba a3 a0 : 10010000 10000000 10111010 10100011 1010
@@ -339,29 +341,29 @@ e.g.:
     0         = tx_button; 1 bit
     00        = channel; 2 bit
     0000      = temperature leading sign,
-                1110=0xe(-51.1°C to -25.7°C),
-                1111=0xf(-25.6°C to - 0.1°C),
-                0000=0x0(  0.0°C to  25,5°C),
-                0001=0x1( 25.6°C to  51.1°C),
-                0010=0x2( 51.2°C to  76.7°C); 4 bit
-    10111010  = temperature=0xba=186=18,6°C; 8 bit
+                1110=0xe(-51.1ï¿½C to -25.7ï¿½C),
+                1111=0xf(-25.6ï¿½C to - 0.1ï¿½C),
+                0000=0x0(  0.0ï¿½C to  25,5ï¿½C),
+                0001=0x1( 25.6ï¿½C to  51.1ï¿½C),
+                0010=0x2( 51.2ï¿½C to  76.7ï¿½C); 4 bit
+    10111010  = temperature=0xba=186=18,6ï¿½C; 8 bit
     1010      = fixed; 4 bit
     0011 1010 = humidity=0x3a=58%; 8 bit
 */
-// ToDo: The timings have come about through trial and error. Audit this against weak signals!
-/* r_device auriol_afw2a1 =  */{
-        name:        "Auriol AFW2A1 temperature/humidity sensor",
-        modulation:  "OOK_PULSE_PPM",
-        short_width: 576,
-        long_width:  1536,
-        sync_width:  0, // No sync bit used
-        gap_limit:   2012,
-        reset_limit: 3954,
-        decodefn:   "auriol_afw2a1_decode",
-        disabled:    0, // No side effects known.
-        fields:      "output_fields",
-},
-/** @file
+    // ToDo: The timings have come about through trial and error. Audit this against weak signals!
+    /* r_device auriol_afw2a1 =  */{
+      name: 'Auriol AFW2A1 temperature/humidity sensor',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 576,
+      long_width: 1536,
+      sync_width: 0, // No sync bit used
+      gap_limit: 2012,
+      reset_limit: 3954,
+      decodefn: 'auriol_afw2a1_decode',
+      disabled: 0, // No side effects known.
+      fields: 'output_fields',
+    },
+    /** @file
     Biltema-Rain sensor.
 
     Copyright (C) 2017 Timopen, cleanup by Benjamin Larsson
@@ -371,7 +373,7 @@ e.g.:
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
 */
-/**
+    /**
 Biltema-Rain sensor.
 
 Based on the springfield.c code, there is a lack of samples and data
@@ -387,19 +389,19 @@ thus the decoder is disabled by default.
   e.g tilt 82 = 2 divide by 19.23 to get mm.
 - nibble[8] is checksum, have not figured it out yet. Last bit is sync? or included in checksum?.
 */
-/* r_device bt_rain =  */{
-        name:        "Biltema rain gauge",
-        modulation:  "OOK_PULSE_PPM",
-        short_width: 1940,
-        long_width:  3900,
-        gap_limit:   4100,
-        reset_limit: 8800,
-        decodefn:   "bt_rain_decode",
-        disabled:    1,
-        fields:      "output_fields",
-},
+    /* r_device bt_rain =  */{
+      name: 'Biltema rain gauge',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 1940,
+      long_width: 3900,
+      gap_limit: 4100,
+      reset_limit: 8800,
+      decodefn: 'bt_rain_decode',
+      disabled: 1,
+      fields: 'output_fields',
+    },
 
-/** @file
+    /** @file
     Decoder for Digitech XC-0324 temperature sensor.
 
     Copyright (C) 2018 Geoff Lee
@@ -409,7 +411,7 @@ thus the decoder is disabled by default.
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
 */
-/** @fn static int xc0324_callback(r_device *decoder, bitbuffer_t *bitbuffer)
+    /** @fn static int xc0324_callback(r_device *decoder, bitbuffer_t *bitbuffer)
 Digitech XC-0324 device.
 
 The encoding is pulse position modulation
@@ -468,17 +470,17 @@ running this decoder with debug level :
 #define XC0324_DEVICE_STARTBYTE   0x5F
 #define XC0324_DEVICE_MINREPEATS  3
 */
-/* r_device digitech_xc0324 =  */{
-    name:           "Digitech XC-0324 temperature sensor",
-    modulation:     "OOK_PULSE_PPM",
-    short_width:    520, // = 130 * 4
-    long_width:     1000, // = 250 * 4
-    reset_limit:    3000,
-    decodefn:      "xc0324_callback",
-    disabled:       1, // stop debug output from spamming unsuspecting users
-    fields:         "output_fields",
-},
-/* Decoder for UHF Dish Remote Control 6.3, tested with genuine Dish remote.
+    /* r_device digitech_xc0324 =  */{
+      name: 'Digitech XC-0324 temperature sensor',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 520, // = 130 * 4
+      long_width: 1000, // = 250 * 4
+      reset_limit: 3000,
+      decodefn: 'xc0324_callback',
+      disabled: 1, // stop debug output from spamming unsuspecting users
+      fields: 'output_fields',
+    },
+    /* Decoder for UHF Dish Remote Control 6.3, tested with genuine Dish remote.
  *
  * Copyright (C) 2018 David E. Tiller
  *
@@ -501,29 +503,29 @@ running this decoder with debug level :
 #define MYDEVICE_BITLEN      16
 #define MYDEVICE_MINREPEATS  3
 */
-/* r_device dish_remote_6_3 =  */{
-    name:          "Dish remote 6.3",
-    modulation:    "OOK_PULSE_PPM",
-    short_width:   1692,
-    long_width:    2812,
-    gap_limit:     4500,
-    reset_limit:   9000,
-    decodefn:     "dish_remote_6_3_callback",
-    disabled:      1,
-    fields:        "output_fields",
-},
-/* r_device elv_em1000 =  */{
-    name:           "ELV EM 1000",
-    modulation:     "OOK_PULSE_PPM",
-    short_width:    500,  // guessed, no samples available
-    long_width:     1000, // guessed, no samples available
-    gap_limit:      7250,
-    reset_limit:    30000,
-    decodefn:      "em1000_callback",
-    disabled:       1,
-    fields:         "elv_em1000_output_fields",
-},
-/** @file
+    /* r_device dish_remote_6_3 =  */{
+      name: 'Dish remote 6.3',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 1692,
+      long_width: 2812,
+      gap_limit: 4500,
+      reset_limit: 9000,
+      decodefn: 'dish_remote_6_3_callback',
+      disabled: 1,
+      fields: 'output_fields',
+    },
+    /* r_device elv_em1000 =  */{
+      name: 'ELV EM 1000',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 500, // guessed, no samples available
+      long_width: 1000, // guessed, no samples available
+      gap_limit: 7250,
+      reset_limit: 30000,
+      decodefn: 'em1000_callback',
+      disabled: 1,
+      fields: 'elv_em1000_output_fields',
+    },
+    /** @file
     Esperanza EWS-103 sensor on 433.92Mhz.
 
     Copyright (C) 2015 Alberts Saulitis
@@ -534,7 +536,7 @@ running this decoder with debug level :
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 */
-/**
+    /**
 Largely the same as kedsum, s3318p.
 \sa kedsum.c s3318p.c
 
@@ -572,18 +574,18 @@ Sample Data:
     [12] {42} 00 53 e5 69 02 00 : 00000000 01010011 11100101 01101001 00000010 00
     [13] {0} :
 */
-/* r_device esperanza_ews =  */{
-    name:           "Esperanza EWS",
-    modulation:     "OOK_PULSE_PPM",
-    short_width:    2000,
-    long_width:     4000,
-    gap_limit:      4400,
-    reset_limit:    9400,
-    decodefn:      "esperanza_ews_callback",
-    disabled:       0,
-    fields:         "output_fields",
-},
-/** @file
+    /* r_device esperanza_ews =  */{
+      name: 'Esperanza EWS',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 2000,
+      long_width: 4000,
+      gap_limit: 4400,
+      reset_limit: 9400,
+      decodefn: 'esperanza_ews_callback',
+      disabled: 0,
+      fields: 'output_fields',
+    },
+    /** @file
     Eurochron temperature and humidity sensor.
 
     Copyright (c) 2019 by Oliver WeyhmÃ¼ller
@@ -593,7 +595,7 @@ Sample Data:
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
 */
-/**
+    /**
 Eurochron temperature and humidity sensor.
 
 Datagram format:
@@ -616,19 +618,19 @@ Observed update intervals:
 - at least once within 120 seconds (with stable values)
 - down to 12 seconds (with rapidly changing values)
 */
-/* r_device eurochron =  */{
-        name:          "Eurochron temperature and humidity sensor",
-        modulation:    "OOK_PULSE_PPM",
-        short_width:   1016,
-        long_width:    2024,
-        gap_limit:     2100,
-        reset_limit:   8200,
-        decodefn:     "eurochron_decode",
-        disabled:      1,
-        fields:        "output_fields",
-},
+    /* r_device eurochron =  */{
+      name: 'Eurochron temperature and humidity sensor',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 1016,
+      long_width: 2024,
+      gap_limit: 2100,
+      reset_limit: 8200,
+      decodefn: 'eurochron_decode',
+      disabled: 1,
+      fields: 'output_fields',
+    },
 
-/** @file
+    /** @file
     Simple FS20 remote decoder.
 
     Copyright (C) 2019 Dominik Pusch <dominik.pusch@koeln.de>
@@ -638,7 +640,7 @@ Observed update intervals:
     published by the Free Software Foundation.
 */
 
-/*
+    /*
 Simple FS20 remote decoder.
 
 Frequency: use rtl_433 -f 868.35M
@@ -650,23 +652,23 @@ fs20 protocol frame info from http://www.fhz4linux.info/tiki-index.php?page=FS20
 
 with extended commands
 
-    preamble  hc1    parity  hc2    parity  address  parity  cmd    parity  ext    parity  chksum  parity  eot
-    13 bit    8 bit  1 bit   8 bit  1 bit   8 bit    1 bit   8 bit  1 bit   8 bit  1 bit   8 bit   1 bit   1 bit
+    preamble hc1   parity hc2   parity address parity cmd   parity ext   parity chksum parity eot
+    13 bit   8 bit 1 bit  8 bit 1 bit  8 bit   1 bit  8 bit 1 bit  8 bit 1 bit  8 bit  1 bit  1 bit
 
 checksum and parity are not checked by this decoder.
 Command extensions are also not decoded. feel free to improve!
 */
-/* r_device fs20 =  */{
-        name:        "FS20",
-        modulation:  "OOK_PULSE_PPM",
-        short_width: 400,
-        long_width:  600,
-        reset_limit: 9000,
-        decodefn:   "fs20_decode",
-        disabled:    1, // missing MIC and no sample data
-        fields:      "output_fields",
-},
-/*
+    /* r_device fs20 =  */{
+      name: 'FS20',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 400,
+      long_width: 600,
+      reset_limit: 9000,
+      decodefn: 'fs20_decode',
+      disabled: 1, // missing MIC and no sample data
+      fields: 'output_fields',
+    },
+    /*
  * FT-004-B Temperature Sensor
  *
  * The sensor sends a packet every 60 seconds. Each frame of 46 bits
@@ -697,18 +699,18 @@ Command extensions are also not decoded. feel free to improve!
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* r_device ft004b =  */{
-    name:          "FT-004-B Temperature Sensor",
-    modulation:    "OOK_PULSE_PPM",
-    short_width:   1956,
-    long_width:    3900,
-    gap_limit:     4000,
-    reset_limit:   4000,
-    decodefn:     "ft004b_callback",
-    disabled:      0,
-    fields:        "output_fields",
-},
-/* Generic temperature sensor 1
+    /* r_device ft004b =  */{
+      name: 'FT-004-B Temperature Sensor',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 1956,
+      long_width: 3900,
+      gap_limit: 4000,
+      reset_limit: 4000,
+      decodefn: 'ft004b_callback',
+      disabled: 0,
+      fields: 'output_fields',
+    },
+    /* Generic temperature sensor 1
  *
  * Copyright (C) 2015 Alexandre Coffignal
  *
@@ -718,7 +720,7 @@ Command extensions are also not decoded. feel free to improve!
  * (at your option) any later version.
  *
  */
-/*
+    /*
 10 24 bits frames
 
     IIIIIIII BBTTTTTT TTTTTTTT
@@ -727,18 +729,18 @@ Command extensions are also not decoded. feel free to improve!
 - B: 2 bit? Battery ?
 - T: 12 bit Temp
 */
-/* r_device generic_temperature_sensor =  */{
-    name:          "Generic temperature sensor 1",
-    modulation:    "OOK_PULSE_PPM",
-    short_width:   2000,
-    long_width:    4000,
-    gap_limit:     4800,
-    reset_limit:   10000,
-    decodefn:     "generic_temperature_sensor_callback",
-    disabled:      0,
-    fields:        "output_fields",
-},
-/** @file
+    /* r_device generic_temperature_sensor =  */{
+      name: 'Generic temperature sensor 1',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 2000,
+      long_width: 4000,
+      gap_limit: 4800,
+      reset_limit: 10000,
+      decodefn: 'generic_temperature_sensor_callback',
+      disabled: 0,
+      fields: 'output_fields',
+    },
+    /** @file
     Globaltronics Quigg BBQ GT-TMBBQ-05
 
     Copyright (C) 2019 Olaf Glage
@@ -748,14 +750,15 @@ Command extensions are also not decoded. feel free to improve!
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 */
-/**
+    /**
 Globaltronics Quigg BBQ GT-TMBBQ-05.
 
 BBQ thermometer sold at Aldi (germany)
 Simple device, no possibility to select channel. Single temperature measurement.
 
 The temperature is transmitted in Fahrenheit with an addon of 90. Accuracy is 10 bit. No decimals.
-One data row contains 33 bits and is repeated 8 times. Each followed by a 0-row. So we have 16 rows in total.
+One data row contains 33 bits and is repeated 8 times. Each followed by a 0-row. So we have 16 rows
+in total.
 First bit seem to be a static 0. By ignoring this we get nice byte boundaries.
 Next 8 bits are static per device (even after battery change)
 Next 8 bits contain the lower 8 bits of the temperature.
@@ -805,22 +808,23 @@ Frame structure:
 - T: temperature+90 F upper 2 bits
 - P: odd parity bit
 - c: sum of first 5 nibbles
-    // 33 bit, repeated multiple times (technically it is repeated 8 times, look for 5 identical versions)
+    // 33 bit, repeated multiple times (technically it is repeated 8 times, look for 5 identical
+    // versions)
 
 */
 
-/* r_device gt_tmbbq05 =  */{
-        name:        "Globaltronics QUIGG GT-TMBBQ-05",
-        modulation:  "OOK_PULSE_PPM",
-        short_width: 2000,
-        long_width:  4000,
-        gap_limit:   4200,
-        reset_limit: 9100,
-        decodefn:   "gt_tmbbq05_decode",
-        disabled:    0,
-        fields:      "output_fields",
-},
-/** @file
+    /* r_device gt_tmbbq05 =  */{
+      name: 'Globaltronics QUIGG GT-TMBBQ-05',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 2000,
+      long_width: 4000,
+      gap_limit: 4200,
+      reset_limit: 9100,
+      decodefn: 'gt_tmbbq05_decode',
+      disabled: 0,
+      fields: 'output_fields',
+    },
+    /** @file
     GT-WT-02 sensor on 433.92MHz.
 
     Copyright (C) 2015 Paul Ortyl
@@ -829,7 +833,7 @@ Frame structure:
     it under the terms of the GNU General Public License version 3 as
     published by the Free Software Foundation.
 */
-/**
+    /**
 GT-WT-02 sensor on 433.92MHz.
 
 Example and frame description provided by https://github.com/ludwich66
@@ -861,22 +865,22 @@ TYPE Description:
 
 A Lidl AURIO (from 12/2018) with PCB marking YJ-T12 V02 has two extra bits in front.
 */
-/* r_device gt_wt_02 =  */{
-        name:        "Globaltronics GT-WT-02 Sensor",
-        modulation:  "OOK_PULSE_PPM",
-        short_width: 2500, // 3ms (old) / 2ms (new)
-        long_width:  5000, // 6ms (old) / 4ms (new)
-        gap_limit:   8000, // 10ms (old) / 9ms (new) sync gap
-        reset_limit: 12000,
-        decodefn:   "gt_wt_02_decode",
-        disabled:    0,
-        fields:      "output_fields",
-},
+    /* r_device gt_wt_02 =  */{
+      name: 'Globaltronics GT-WT-02 Sensor',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 2500, // 3ms (old) / 2ms (new)
+      long_width: 5000, // 6ms (old) / 4ms (new)
+      gap_limit: 8000, // 10ms (old) / 9ms (new) sync gap
+      reset_limit: 12000,
+      decodefn: 'gt_wt_02_decode',
+      disabled: 0,
+      fields: 'output_fields',
+    },
 
-/** @file
+    /** @file
     inFactory outdoor temperature and humidity sensor.
 
-    Copyright (C) 2017 Sirius Weiß <siriuz@gmx.net>
+    Copyright (C) 2017 Sirius Weiï¿½ <siriuz@gmx.net>
     Copyright (C) 2017 Christian W. Zuckschwerdt <zany@triq.net>
 
     This program is free software; you can redistribute it and/or modify
@@ -884,7 +888,7 @@ A Lidl AURIO (from 12/2018) with PCB marking YJ-T12 V02 has two extra bits in fr
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
 */
-/**
+    /**
 inFactory Outdoor sensor transmits data temperature, humidity.
 
 Also NC-3982-913 from Pearl (for FWS-686 station).
@@ -898,7 +902,7 @@ every 60 seconds 6 packets.
 - x: ID // changes on battery switch
 - c: Unknown Checksum (changes on every transmit if the other values are different)
 - h: Humidity // BCD-encoded, each nibble is one digit
-- t: Temperature   // in °F as binary number with one decimal place + 90 °F offset
+- t: Temperature   // in ï¿½F as binary number with one decimal place + 90 ï¿½F offset
 - n: Channel // Channel number 1 - 3
 
 Usage:
@@ -912,20 +916,20 @@ Payload looks like this:
 
 First row is actually the preamble part. This is added to make the signal more unique.
 */
-/* r_device infactory =  */{
-        name:        "inFactory, FreeTec NC-3982-913 temperature humidity sensor",
-        modulation:  "OOK_PULSE_PPM",
-        short_width: 1850,
-        long_width:  4050,
-        gap_limit:   4000, // Maximum gap size before new row of bits [us]
-        reset_limit: 8500, // Maximum gap size before End Of Message [us].
-        tolerance:   1000,
-        decodefn:   "infactory_callback",
-        disabled:    0,
-        fields:      "output_fields",
-},
+    /* r_device infactory =  */{
+      name: 'inFactory, FreeTec NC-3982-913 temperature humidity sensor',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 1850,
+      long_width: 4050,
+      gap_limit: 4000, // Maximum gap size before new row of bits [us]
+      reset_limit: 8500, // Maximum gap size before End Of Message [us].
+      tolerance: 1000,
+      decodefn: 'infactory_callback',
+      disabled: 0,
+      fields: 'output_fields',
+    },
 
-/* Inovalley kw9015b rain and Temperature weather station
+    /* Inovalley kw9015b rain and Temperature weather station
  *
  * Copyright (C) 2015 Alexandre Coffignal
  *
@@ -935,18 +939,18 @@ First row is actually the preamble part. This is added to make the signal more u
  * (at your option) any later version.
  */
 
-/* r_device kw9015b =  */{
-    name:          "Inovalley kw9015b, TFA Dostmann 30.3161 (Rain and temperature sensor)",
-    modulation:    "OOK_PULSE_PPM",
-    short_width:   2000,
-    long_width:    4000,
-    gap_limit:     4800,
-    reset_limit:   10000,
-    decodefn:     "kw9015b_callback",
-    disabled:      1,
-    fields:        "kw9015b_csv_output_fields",
-},
-/* Interlogix/GE/UTC Wireless Device Decoder
+    /* r_device kw9015b =  */{
+      name: 'Inovalley kw9015b, TFA Dostmann 30.3161 (Rain and temperature sensor)',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 2000,
+      long_width: 4000,
+      gap_limit: 4800,
+      reset_limit: 10000,
+      decodefn: 'kw9015b_callback',
+      disabled: 1,
+      fields: 'kw9015b_csv_output_fields',
+    },
+    /* Interlogix/GE/UTC Wireless Device Decoder
  *
  * Copyright (C) 2017 Brent Bailey <bailey.brent@gmail.com>
  *
@@ -999,26 +1003,30 @@ First row is actually the preamble part. This is added to make the signal more u
  * Bits 16-58 provide information regarding the transmitter and associated sensor. In other
  *      embodiments, bits 16-58 may be replaced by an analog signal.
  * Bits 16 to 35 provide a 20-bit sensor identification code that uniquely identifies the particular
- *      sensor sending the message. Bits 36 to 39 provide a 4 bit device-type code that identifies the
- *      specific-type of sensor, e.g., smoke, PIR, door, window, etc. The combination of the sensor
- *      bits and device bits provide a set of data bits.
+ *      sensor sending the message. Bits 36 to 39 provide a 4 bit device-type code that identifies
+ *      the specific-type of sensor, e.g., smoke, PIR, door, window, etc. The combination of the
+ *      sensor bits and device bits provide a set of data bits.
  * Bits 40 through 42 provide a 3-bit trigger count that is incremented for each group of message
  *      packets. The trigger count is a simple but effective way for preventing a third party from
  *      recording a message packet transmission and then re-transmitting that message packet
- *      transmission to make the system controller think that a valid message packet is being transmitted.
+ *      transmission to make the system controller think that a valid message packet is being
+ *      transmitted.
  * Bit 43 provides the low battery bit.
- * Bits 44 through 53 provide the latch bit value and the debounced value for each of the five inputs
- *      associated with the transmitter. For the F5 input, both a positive and negative latch bit are provided.
+ * Bits 44 through 53 provide the latch bit value and the debounced value for each of the five
+ *      inputs associated with the transmitter. For the F5 input, both a positive and negative latch
+ *      bit are provided.
  * Bit 55 provides even parity over odd bits 15 to 55.
  * Bit 56 provides odd parity over even bits 16 to 56.
- * Bit 57 is a programmable bit that can be used for a variety of applications, including providing an
- *      additional bit that could be used for the sensor identification code or device type code.
- * Bit 58 is a 366 ms RF on signal that functions as the "old" stop bit. This bit provides compatibility with
- *      prior system controllers that may be programmed to receive a 58-bit message.
+ * Bit 57 is a programmable bit that can be used for a variety of applications, including providing
+ *      an additional bit that could be used for the sensor identification code or device type code.
+ * Bit 58 is a 366 ms RF on signal that functions as the "old" stop bit. This bit provides
+ *      compatibility with prior system controllers that may be programmed to receive a 58-bit
+ *      message.
  * Bit 59 is a logical 1.
- * Bits 60 to 62 are a modulus eight count of the number of 1 bits in bits 15 through 54, providing enhanced
- *      error detection information to be used by the system controller. Finally, bit 63 is the "new" stop bit,
- *      e.g., a logical 0, that tells the system controller that it is the end of the message packet.
+ * Bits 60 to 62 are a modulus eight count of the number of 1 bits in bits 15 through 54, providing
+ *      enhanced error detection information to be used by the system controller. Finally, bit 63 is
+ *      the "new" stop bit, e.g., a logical 0, that tells the system controller that it is the end
+ *      of the message packet.
  *
  * Addendum
  * _______________________________
@@ -1033,39 +1041,39 @@ First row is actually the preamble part. This is added to make the signal more u
  *     and there is no 4.7 Kohm end of line resistor in place on the external
  *     circuit
 
-
 #define INTERLOGIX_MSG_BIT_LEN 46
 */
-/* r_device interlogix =  */{
-    name:          "Interlogix GE UTC Security Devices",
-    modulation:    "OOK_PULSE_PPM",
-    short_width:   122,
-    long_width:    244,
-    reset_limit:   500, // Maximum gap size before End Of Message
-    decodefn:     "interlogix_callback",
-    disabled:      0,
-    fields:        "output_fields",
-},
-/* Intertechno remotes.
+    /* r_device interlogix =  */{
+      name: 'Interlogix GE UTC Security Devices',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 122,
+      long_width: 244,
+      reset_limit: 500, // Maximum gap size before End Of Message
+      decodefn: 'interlogix_callback',
+      disabled: 0,
+      fields: 'output_fields',
+    },
+    /* Intertechno remotes.
  *
- * Intertechno remote labeled ITT-1500 that came with 3x ITR-1500 remote outlets. The set is labeled IT-1500.
- * The PPM consists of a 220µs high followed by 340µs or 1400µs of gap.
+ * Intertechno remote labeled ITT-1500 that came with 3x ITR-1500 remote outlets. The set is labeled
+ * IT-1500.
+ * The PPM consists of a 220ï¿½s high followed by 340ï¿½s or 1400ï¿½s of gap.
  *
  * There is another type of remotes that have an ID prefix of 0x56 and slightly shorter timing.
  */
 
-/* r_device intertechno =  */{
-    name:           "Intertechno 433",
-    modulation:     "OOK_PULSE_PPM",
-    short_width:    330,
-    long_width:     1400,
-    gap_limit:      1700,
-    reset_limit:    10000,
-    decodefn:      "intertechno_callback",
-    disabled:       1,
-    fields:         "output_fields",
-},
-/** @file
+    /* r_device intertechno =  */{
+      name: 'Intertechno 433',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 330,
+      long_width: 1400,
+      gap_limit: 1700,
+      reset_limit: 10000,
+      decodefn: 'intertechno_callback',
+      disabled: 1,
+      fields: 'output_fields',
+    },
+    /** @file
     Kedsum temperature and humidity sensor (http://amzn.to/25IXeng).
     My models transmit at a bit lower freq. of around 433.71 Mhz.
     Also NC-7415 from Pearl.
@@ -1078,7 +1086,7 @@ First row is actually the preamble part. This is added to make the signal more u
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 */
-/**
+    /**
 Largely the same as esperanza_ews, s3318p.
 \sa esperanza_ews.c s3318p.c
 
@@ -1106,18 +1114,18 @@ Frame structure:
 
 */
 
-/* r_device kedsum =  */{
-    name:           "Kedsum Temperature & Humidity Sensor, Pearl NC-7415",
-    modulation:     "OOK_PULSE_PPM",
-    short_width:    2000,
-    long_width:     4000,
-    gap_limit:      4400,
-    reset_limit:    9400,
-    decodefn:      "kedsum_callback",
-    disabled:       0,
-    fields:         "output_fields",
-},
-/* LightwaveRF protocol
+    /* r_device kedsum =  */{
+      name: 'Kedsum Temperature & Humidity Sensor, Pearl NC-7415',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 2000,
+      long_width: 4000,
+      gap_limit: 4400,
+      reset_limit: 9400,
+      decodefn: 'kedsum_callback',
+      disabled: 0,
+      fields: 'output_fields',
+    },
+    /* LightwaveRF protocol
  *
  * Stub for decoding test data only
  *
@@ -1131,21 +1139,22 @@ Frame structure:
  * (at your option) any later version.
     // Validate package
      // Transmitted pulses are always 72
-     // Pulse 72 (delimiting "1" is not demodulated, as gap becomes End-Of-Message - thus expected length is 71
+     // Pulse 72 (delimiting "1" is not demodulated, as gap becomes End-Of-Message - thus expected
+     // length is 71
 
  */
 
-/* r_device lightwave_rf =  */{
-    name:           "LightwaveRF",
-    modulation:     "OOK_PULSE_PPM",
-    short_width:    250, // Short gap 250Âµs, long gap 1250Âµs, (Pulse width is 250Âµs)
-    long_width:     1250, //
-    reset_limit:    1500, // Gap between messages is unknown so let us get them individually
-    decodefn:      "lightwave_rf_callback",
-    disabled:       1,
-    fields:         "output_fields",
-},
-/* Maverick ET-73
+    /* r_device lightwave_rf =  */{
+      name: 'LightwaveRF',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 250, // Short gap 250Âµs, long gap 1250Âµs, (Pulse width is 250Âµs)
+      long_width: 1250, //
+      reset_limit: 1500, // Gap between messages is unknown so let us get them individually
+      decodefn: 'lightwave_rf_callback',
+      disabled: 1,
+      fields: 'output_fields',
+    },
+    /* Maverick ET-73
  *
  * Copyright (C) 2018 Benjamin Larsson
  *
@@ -1172,7 +1181,6 @@ Based on TP12 code
 [12] {48} 68 00 01 0b 90 fc : 01101000 00000000 00000001 00001011 10010000 11111100
 [13] {48} 68 00 01 0b 90 fc : 01101000 00000000 00000001 00001011 10010000 11111100
 
-
 Layout appears to be:
           II 11 12 22 XX XX
 [01] {48} 68 00 01 0b 90 fc : 01101000 00000000 00000001 00001011 10010000 11111100
@@ -1183,33 +1191,33 @@ I = random id
 X = unknown, checksum maybe ?
 
 */
-/* r_device maverick_et73 =  */{
-    name:          "Maverick et73",
-    modulation:    "OOK_PULSE_PPM",
-    short_width:   1050,
-    long_width:    2050,
-    gap_limit:     2070,
-    reset_limit:   4040,
-    decodefn:     "maverick_et73_sensor_callback",
-    disabled:      0,
-    fields:        "output_fields",
-},
+    /* r_device maverick_et73 =  */{
+      name: 'Maverick et73',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 1050,
+      long_width: 2050,
+      gap_limit: 2070,
+      reset_limit: 4040,
+      decodefn: 'maverick_et73_sensor_callback',
+      disabled: 0,
+      fields: 'output_fields',
+    },
 
-/* r_device mebus433 =  */{
-    name:           "Mebus 433",
-    modulation:     "OOK_PULSE_PPM",
-    short_width:    800, // guessed, no samples available
-    long_width:     1600, // guessed, no samples available
-    gap_limit:      2400,
-    reset_limit:    6000,
-    decodefn:      "mebus433_callback",
-    disabled:       1, // add docs, tests, false positive checks and then reenable
-    fields:         "output_fields",
-},
-/** @file
+    /* r_device mebus433 =  */{
+      name: 'Mebus 433',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 800, // guessed, no samples available
+      long_width: 1600, // guessed, no samples available
+      gap_limit: 2400,
+      reset_limit: 6000,
+      decodefn: 'mebus433_callback',
+      disabled: 1, // add docs, tests, false positive checks and then reenable
+      fields: 'output_fields',
+    },
+    /** @file
     Kaku decoder.
 */
-/**
+    /**
 Kaku decoder.
 Might be similar to an x1527.
 S.a. Nexa, Proove.
@@ -1224,19 +1232,19 @@ start pulse: 1T high, 10.44T low
 - [4 bit:  dim level. Present if [dim] is used, but might be present anyway...]
 - stop pulse: 1T high, 40T low
 */
-/* r_device newkaku =  */{
-        name:        "KlikAanKlikUit Wireless Switch",
-        modulation:  "OOK_PULSE_PPM",
-        short_width: 300,  // 1:1
-        long_width:  1400, // 1:5
-        sync_width:  2700, // 1:10
-        tolerance:   200,
-        reset_limit: 3200,
-        decodefn:   "newkaku_callback",
-        disabled:    0,
-        fields:      "output_fields",
-},
-/** @file
+    /* r_device newkaku =  */{
+      name: 'KlikAanKlikUit Wireless Switch',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 300, // 1:1
+      long_width: 1400, // 1:5
+      sync_width: 2700, // 1:10
+      tolerance: 200,
+      reset_limit: 3200,
+      decodefn: 'newkaku_callback',
+      disabled: 0,
+      fields: 'output_fields',
+    },
+    /** @file
     Nexa decoder.
 
     Copyright (C) 2017 Christian Juncker BrÃ¦dstrup
@@ -1246,7 +1254,7 @@ start pulse: 1T high, 10.44T low
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
 */
-/**
+    /**
 Nexa decoder.
 Might be similar to an x1527.
 S.a. Kaku, Proove.
@@ -1260,23 +1268,23 @@ This device is very similar to the proove magnetic sensor.
 The proove decoder will capture the OFF-state but not the ON-state
 since the Nexa uses two different bit lengths for ON and OFF.
 */
-/* r_device nexa =  */{
-        name:        "Nexa",
-        modulation:  "OOK_PULSE_PPM",
-        short_width: 270,  // 1:1
-        long_width:  1300, // 1:5
-        sync_width:  2700, // 1:10
-        tolerance:   200,
-        gap_limit:   1500,
-        reset_limit: 2800,
-        decodefn:   "nexa_callback",
-        disabled:    0,
-        fields:      "output_fields",
-},
-/** @file
+    /* r_device nexa =  */{
+      name: 'Nexa',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 270, // 1:1
+      long_width: 1300, // 1:5
+      sync_width: 2700, // 1:10
+      tolerance: 200,
+      gap_limit: 1500,
+      reset_limit: 2800,
+      decodefn: 'nexa_callback',
+      disabled: 0,
+      fields: 'output_fields',
+    },
+    /** @file
     Nexus temperature and optional humidity sensor protocol.
 */
-/** @fn int nexus_callback(r_device *decoder, bitbuffer_t *bitbuffer)
+    /** @fn int nexus_callback(r_device *decoder, bitbuffer_t *bitbuffer)
 Nexus sensor protocol with ID, temperature and optional humidity
 also FreeTec (Pearl) NC-7345 sensors for FreeTec Weatherstation NC-7344,
 also infactory/FreeTec (Pearl) NX-3980 sensors for infactory/FreeTec NX-3974 station.
@@ -1299,21 +1307,21 @@ The data is grouped in 9 nibbles:
 
 The sensors can be bought at Clas Ohlsen (Nexus) and Pearl (infactory/FreeTec).
 */
-/* r_device nexus =  */{
-        name:        "Nexus, FreeTec NC-7345, NX-3980 temperature/humidity sensor",
-        modulation:  "OOK_PULSE_PPM",
-        short_width: 1000,
-        long_width:  2000,
-        gap_limit:   3000,
-        reset_limit: 5000,
-        decodefn:   "nexus_callback",
-        disabled:    0,
-        fields:      "output_fields",
-},
-/** @file
+    /* r_device nexus =  */{
+      name: 'Nexus, FreeTec NC-7345, NX-3980 temperature/humidity sensor',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 1000,
+      long_width: 2000,
+      gap_limit: 3000,
+      reset_limit: 5000,
+      decodefn: 'nexus_callback',
+      disabled: 0,
+      fields: 'output_fields',
+    },
+    /** @file
     Oregon Scientific SL109H decoder.
 */
-/**
+    /**
 Oregon Scientific SL109H decoder.
 
 Data layout (bits):
@@ -1329,21 +1337,21 @@ Data layout (bits):
 
 S.a. http://www.osengr.org/WxShield/Downloads/OregonScientific-RF-Protocols-II.pdf
 */
-/* r_device oregon_scientific_sl109h =  */{
-        name:        "Oregon Scientific SL109H Remote Thermal Hygro Sensor",
-        modulation:  "OOK_PULSE_PPM",
-        short_width: 2000,
-        long_width:  4000,
-        gap_limit:   5000,
-        reset_limit: 10000, // packet gap is 8900
-        decodefn:   "oregon_scientific_sl109h_callback",
-        disabled:    0,
-        fields:      "output_fields",
-},
-/** @file
+    /* r_device oregon_scientific_sl109h =  */{
+      name: 'Oregon Scientific SL109H Remote Thermal Hygro Sensor',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 2000,
+      long_width: 4000,
+      gap_limit: 5000,
+      reset_limit: 10000, // packet gap is 8900
+      decodefn: 'oregon_scientific_sl109h_callback',
+      disabled: 0,
+      fields: 'output_fields',
+    },
+    /** @file
     Prologue sensor protocol.
 */
-/** @fn int prologue_callback(r_device *decoder, bitbuffer_t *bitbuffer)
+    /** @fn int prologue_callback(r_device *decoder, bitbuffer_t *bitbuffer)
 Prologue sensor protocol,
 also FreeTec NC-7104 sensor for FreeTec Weatherstation NC-7102,
 and Pearl NC-7159-675.
@@ -1368,28 +1376,28 @@ The data is grouped in 9 nibbles
 
 The sensor can be bought at Clas Ohlson.
 */
-/* r_device prologue =  */{
-        name:        "Prologue, FreeTec NC-7104, NC-7159-675 temperature sensor",
-        modulation:  "OOK_PULSE_PPM",
-        short_width: 2000,
-        long_width:  4000,
-        gap_limit:   7000,
-        reset_limit: 10000,
-        decodefn:   "prologue_callback",
-        disabled:    0,
-        fields:      "output_fields",
-},
-/** @file
+    /* r_device prologue =  */{
+      name: 'Prologue, FreeTec NC-7104, NC-7159-675 temperature sensor',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 2000,
+      long_width: 4000,
+      gap_limit: 7000,
+      reset_limit: 10000,
+      decodefn: 'prologue_callback',
+      disabled: 0,
+      fields: 'output_fields',
+    },
+    /** @file
     Proove decoder.
 
-    Copyright (C) 2016 Ask Jakobsen, Christian Juncker Brædstrup
+    Copyright (C) 2016 Ask Jakobsen, Christian Juncker Brï¿½dstrup
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
 */
-/**
+    /**
 Proove/Nexa/Kaku decoder.
 Might be similar to an x1527.
 S.a. Kaku, Nexa.
@@ -1409,7 +1417,8 @@ Proove packet structure (32 bits or 36 bits with dimmer value):
 
     HHHH HHHH HHHH HHHH HHHH HHHH HHGO CCEE [DDDD]
 
-- H = The first 26 bits are transmitter unique codes, and it is this code that the receiver “learns” to recognize.
+- H = The first 26 bits are transmitter unique codes, and it is this code that the receiver ï¿½learnsï¿½
+      to recognize.
 - G = Group command. Set to 1 for on, 0 for off.
 - O = On/Off bit. Set to 1 for on, 0 for off.
 - C = Channel bits (inverted).
@@ -1425,20 +1434,20 @@ A message is made up by a Sync bit followed by the Packet bits and ended by a Pa
 Every message is repeated about 5-15 times.
 Packet gap is 10 ms.
 */
-/* r_device proove =  */{
-        name:        "Proove / Nexa / KlikAanKlikUit Wireless Switch",
-        modulation:  "OOK_PULSE_PPM",
-        short_width: 270,  // 1:1
-        long_width:  1300, // 1:5
-        sync_width:  2700, // 1:10
-        tolerance:   200,
-        gap_limit:   1500,
-        reset_limit: 2800,
-        decodefn:   "proove_callback",
-        disabled:    0,
-        fields:      "output_fields",
-},
-/* RF-tech decoder
+    /* r_device proove =  */{
+      name: 'Proove / Nexa / KlikAanKlikUit Wireless Switch',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 270, // 1:1
+      long_width: 1300, // 1:5
+      sync_width: 2700, // 1:10
+      tolerance: 200,
+      gap_limit: 1500,
+      reset_limit: 2800,
+      decodefn: 'proove_callback',
+      disabled: 0,
+      fields: 'output_fields',
+    },
+    /* RF-tech decoder
  * Also marked INFRA 217S34
  * Ewig Industries Macao
  *
@@ -1468,19 +1477,19 @@ Packet gap is 10 ms.
      *
      *
  */
-/* r_device rftech =  */{
-    name:       "RF-tech",
-    modulation: "OOK_PULSE_PPM",
-    short_width:    2000,
-    long_width:     4000,
-    gap_limit:      5000,
-    reset_limit:    10000,
-    decodefn:      "rftech_callback",
-    disabled:   1,
-    fields:     "csv_output_fields",
-},
-// timings based on samp_rate=1024000
-/* Currently this can decode the temperature and id from Rubicson sensors
+    /* r_device rftech =  */{
+      name: 'RF-tech',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 2000,
+      long_width: 4000,
+      gap_limit: 5000,
+      reset_limit: 10000,
+      decodefn: 'rftech_callback',
+      disabled: 1,
+      fields: 'csv_output_fields',
+    },
+    // timings based on samp_rate=1024000
+    /* Currently this can decode the temperature and id from Rubicson sensors
  *
  * the sensor sends 36 bits 12 times pwm modulated
  * the data is grouped into 9 nibbles
@@ -1496,18 +1505,18 @@ Packet gap is 10 ms.
  *
  * The sensor can be bought at Kjell&Co
  */
-/* r_device rubicson =  */{
-    name:           "Rubicson Temperature Sensor",
-    modulation:     "OOK_PULSE_PPM",
-    short_width:    1000, // Gaps:  Short 976µs, Long 1940µs, Sync 4000µs
-    long_width:     2000, // Pulse: 500µs (Initial pulse in each package is 388µs)
-    gap_limit:      3000,
-    reset_limit:    4800, // Two initial pulses and a gap of 9120µs is filtered out
-    decodefn:      "rubicson_callback",
-    disabled:       0,
-    fields:         "output_fields",
-},
-/** @file
+    /* r_device rubicson =  */{
+      name: 'Rubicson Temperature Sensor',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 1000, // Gaps:  Short 976ï¿½s, Long 1940ï¿½s, Sync 4000ï¿½s
+      long_width: 2000, // Pulse: 500ï¿½s (Initial pulse in each package is 388ï¿½s)
+      gap_limit: 3000,
+      reset_limit: 4800, // Two initial pulses and a gap of 9120ï¿½s is filtered out
+      decodefn: 'rubicson_callback',
+      disabled: 0,
+      fields: 'output_fields',
+    },
+    /** @file
     Rubicson 48659 meat thermometer.
 
     Copyright (C) 2019 Benjamin Larsson.
@@ -1527,7 +1536,6 @@ Rubicson 48659 meat thermometer.
 - T = Temp in Farenhight
 - M = xorsum high nibble
 - M = xorsum low nibble (add ^4 to match output)
-
 
 {32} 01 08 71 d4    45
 {32} 01 18 73 e6    46
@@ -1562,7 +1570,6 @@ Rubicson 48659 meat thermometer.
 {32} 01 38 a7 3a    75
 {32} 01 48 a9 4c    76
 
-
 battery
 
 {32} cc 38 67 c5    39
@@ -1574,7 +1581,6 @@ battery
 {32} cc 18 53 91    28
 {32} cc 08 51 7f    27
 {32} cc 78 4f ed    26
-
 
 battery
 
@@ -1653,19 +1659,19 @@ battery change for each value
 {32} 1a d4 0a 52    -23
 {32} 1a e4 0c 64    -24
 */
-/* r_device rubicson_48659 =  */{
-        name:        "Rubicson 48659 Thermometer",
-        modulation:  "OOK_PULSE_PPM",
-        short_width: 940,
-        long_width:  1900,
-        gap_limit:   2000,
-        reset_limit: 4000,
-        decodefn:   "rubicson_48659_decode",
-        disabled:    0,
-        fields:      "output_fields",
-},
+    /* r_device rubicson_48659 =  */{
+      name: 'Rubicson 48659 Thermometer',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 940,
+      long_width: 1900,
+      gap_limit: 2000,
+      reset_limit: 4000,
+      decodefn: 'rubicson_48659_decode',
+      disabled: 0,
+      fields: 'output_fields',
+    },
 
-/** @file
+    /** @file
     Conrad Electronics S3318P outdoor sensor.
 
     Copyright (C) 2016 Martin Hauke
@@ -1676,7 +1682,7 @@ battery change for each value
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 */
-/**
+    /**
 Largely the same as esperanza_ews, kedsum.
 \sa esperanza_ews.c kedsum.c
 
@@ -1701,12 +1707,13 @@ Message Format: 40 bits (10 nibbles).
 
 Example data:
 
-    [01] {42} 04 15 66 e2 a1 00 : 00000100 00010101 01100110 11100010 10100001 00 ---> Temp/Hum/Ch:23.2/46/1
+    [01] {42} 04 15 66 e2 a1 00 : 00000100 00010101 01100110 11100010 10100001 00
+        ---> Temp/Hum/Ch:23.2/46/1
 
 Temperature:
-- Sensor sends data in °F, lowest supported value is -90°F
+- Sensor sends data in ï¿½F, lowest supported value is -90ï¿½F
 - 12 bit unsigned and scaled by 10 (Nibbles: 6,5,4)
-- in this case "011001100101" =  1637/10 - 90 = 73.7 °F (23.17 °C)
+- in this case "011001100101" =  1637/10 - 90 = 73.7 ï¿½F (23.17 ï¿½C)
 
 Humidity:
 - 8 bit unsigned (Nibbles 8,7)
@@ -1721,18 +1728,18 @@ Battery status: (Bit 33) (0 normal, 1 voltage is below ~2.7 V)
 Random Code / Device ID: (Nibble 1)
 - changes on every battery change
 */
-/* r_device s3318p =  */{
-    name:           "Conrad S3318P, FreeTec NC-5849-913 temperature humidity sensor",
-    modulation:     "OOK_PULSE_PPM",
-    short_width:    1900,
-    long_width:     3800,
-    gap_limit:      4400,
-    reset_limit:    9400,
-    decodefn:      "s3318p_callback",
-    disabled:       0,
-    fields:         "output_fields",
-},
-/** @file
+    /* r_device s3318p =  */{
+      name: 'Conrad S3318P, FreeTec NC-5849-913 temperature humidity sensor',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 1900,
+      long_width: 3800,
+      gap_limit: 4400,
+      reset_limit: 9400,
+      decodefn: 's3318p_callback',
+      disabled: 0,
+      fields: 'output_fields',
+    },
+    /** @file
     Solight TE44 temperature sensor.
 
     Copyright (C) 2017 Miroslav Oujesky
@@ -1742,9 +1749,8 @@ Random Code / Device ID: (Nibble 1)
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
 */
-/** @fn int solight_te44_callback(r_device *decoder, bitbuffer_t *bitbuffer)
+    /** @fn int solight_te44_callback(r_device *decoder, bitbuffer_t *bitbuffer)
 Solight TE44 -- Generic wireless thermometer, which might be sold as part of different kits.
-
 
 So far these were identified (mostly sold in central/eastern europe)
 - Solight TE44
@@ -1769,19 +1775,19 @@ Data structure:
 Temperature in C = ((256 * m) + t) / 10
 
 */
-/* r_device solight_te44 =  */{
-    name:          "Solight TE44/TE66, EMOS E0107T, NX-6876-917",
-    modulation:    "OOK_PULSE_PPM",
-    short_width:   972, // short gap = 972 us
-    long_width:    1932, // long gap = 1932 us
-    gap_limit:     3000, // packet gap = 3880 us
-    reset_limit:   6000,
-    decodefn:     "solight_te44_callback",
-    disabled:      0,
-    fields:        "output_fields",
-},
+    /* r_device solight_te44 =  */{
+      name: 'Solight TE44/TE66, EMOS E0107T, NX-6876-917',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 972, // short gap = 972 us
+      long_width: 1932, // long gap = 1932 us
+      gap_limit: 3000, // packet gap = 3880 us
+      reset_limit: 6000,
+      decodefn: 'solight_te44_callback',
+      disabled: 0,
+      fields: 'output_fields',
+    },
 
-/**
+    /**
 Springfield PreciseTemp Wireless Temperature and Soil Moisture Station.
 
 http://www.amazon.com/Springfield-Digital-Moisture-Meter-Freeze/dp/B0037BNHLS
@@ -1801,18 +1807,18 @@ Data is transmitted in the following form:
 
 Actually 37 bits for all but last transmission which is 36 bits.
 */
-/* r_device springfield =  */{
-        name:        "Springfield Temperature and Soil Moisture",
-        modulation:  "OOK_PULSE_PPM",
-        short_width: 2000,
-        long_width:  4000,
-        gap_limit:   5000,
-        reset_limit: 9200,
-        decodefn:   "springfield_decode",
-        disabled:    0,
-        fields:      "output_fields",
-},
-/** @file
+    /* r_device springfield =  */{
+      name: 'Springfield Temperature and Soil Moisture',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 2000,
+      long_width: 4000,
+      gap_limit: 5000,
+      reset_limit: 9200,
+      decodefn: 'springfield_decode',
+      disabled: 0,
+      fields: 'output_fields',
+    },
+    /** @file
     TFA pool temperature sensor.
 
     Copyright (C) 2015 Alexandre Coffignal
@@ -1822,7 +1828,7 @@ Actually 37 bits for all but last transmission which is 36 bits.
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
 */
-/**
+    /**
 TFA pool temperature sensor.
 
 10 24 bits frames
@@ -1836,18 +1842,18 @@ TFA pool temperature sensor.
 - B: battery status
 - F: first transmission
 */
-/* r_device tfa_pool_thermometer =  */{
-        name:        "TFA pool temperature sensor",
-        modulation:  "OOK_PULSE_PPM",
-        short_width: 2000,
-        long_width:  4600,
-        gap_limit:   7800,
-        reset_limit: 10000,
-        decodefn:   "tfa_pool_thermometer_decode",
-        disabled:    0,
-        fields:      "output_fields",
-},
-/** @file
+    /* r_device tfa_pool_thermometer =  */{
+      name: 'TFA pool temperature sensor',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 2000,
+      long_width: 4600,
+      gap_limit: 7800,
+      reset_limit: 10000,
+      decodefn: 'tfa_pool_thermometer_decode',
+      disabled: 0,
+      fields: 'output_fields',
+    },
+    /** @file
     TFA-Twin-Plus-30.3049
     also Conrad KW9010 (perhaps just rebranded), Ea2 BL999.
 
@@ -1857,7 +1863,7 @@ TFA pool temperature sensor.
     it under the terms of the GNU General Public License version 3 as
     published by the Free Software Foundation.
 */
-/**
+    /**
 Decode TFA-Twin-Plus-30.3049, Conrad KW9010 (perhaps just rebranded), Ea2 BL999.
 
 Protocol as reverse engineered by https://github.com/iotzo
@@ -1893,18 +1899,18 @@ Protocol as reverse engineered by https://github.com/iotzo
 I have channel number bits(5,6 in reverse order) and low battery bit(9).
 It seems that the 1,2,3,4,7,8 bits changes randomly on every reset/battery change.
 */
-/* r_device tfa_twin_plus_303049 =  */{
-    name:          "TFA-Twin-Plus-30.3049, Conrad KW9010, Ea2 BL999",
-    modulation:    "OOK_PULSE_PPM",
-    short_width:   2000,
-    long_width:    4000,
-    gap_limit:     6000,
-    reset_limit:   10000,
-    decodefn:     "tfa_twin_plus_303049_callback",
-    disabled:      0,
-    fields:         "output_fields",
-},
-/* Thermopro TP-11 Thermometer.
+    /* r_device tfa_twin_plus_303049 =  */{
+      name: 'TFA-Twin-Plus-30.3049, Conrad KW9010, Ea2 BL999',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 2000,
+      long_width: 4000,
+      gap_limit: 6000,
+      reset_limit: 10000,
+      decodefn: 'tfa_twin_plus_303049_callback',
+      disabled: 0,
+      fields: 'output_fields',
+    },
+    /* Thermopro TP-11 Thermometer.
  *
  * Copyright (C) 2017 Google Inc.
  *
@@ -1922,19 +1928,19 @@ It seems that the 1,2,3,4,7,8 bits changes randomly on every reset/battery chang
 The code below checks that at least three rows are the same and
 that the validation code is correct for the known device ids.
 */
-/* r_device thermopro_tp11 =  */{
-    name:          "Thermopro TP11 Thermometer",
-    modulation:    "OOK_PULSE_PPM",
-    short_width:   500,
-    long_width:    1500,
-    gap_limit:     2000,
-    reset_limit:   4000,
-    decodefn:     "thermopro_tp11_sensor_callback",
-    disabled:      0,
-    fields:        "output_fields",
-},
+    /* r_device thermopro_tp11 =  */{
+      name: 'Thermopro TP11 Thermometer',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 500,
+      long_width: 1500,
+      gap_limit: 2000,
+      reset_limit: 4000,
+      decodefn: 'thermopro_tp11_sensor_callback',
+      disabled: 0,
+      fields: 'output_fields',
+    },
 
-/* Thermopro TP-12 Thermometer.
+    /* Thermopro TP-12 Thermometer.
  *
  * Copyright (C) 2017 Google Inc.
  *
@@ -1972,22 +1978,21 @@ Layout appears to be:
                                        low bits 1   2    low bits
                                                 hi bits
 
-
 #define BITS_IN_VALID_ROW 40
 */
-/* r_device thermopro_tp12 =  */{
-    name:          "Thermopro TP08/TP12/TP20 thermometer",
-    modulation:    "OOK_PULSE_PPM",
-    short_width:   500,
-    long_width:    1500,
-    gap_limit:     2000,
-    reset_limit:   4000,
-    decodefn:     "thermopro_tp12_sensor_callback",
-    disabled:      0,
-    fields:        "output_fields",
-},
+    /* r_device thermopro_tp12 =  */{
+      name: 'Thermopro TP08/TP12/TP20 thermometer',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 500,
+      long_width: 1500,
+      gap_limit: 2000,
+      reset_limit: 4000,
+      decodefn: 'thermopro_tp12_sensor_callback',
+      disabled: 0,
+      fields: 'output_fields',
+    },
 
-/** @file
+    /** @file
     TS-FT002 Tank Liquid Level decoder.
 
     Copyright (C) 2019 Christian W. Zuckschwerdt <zany@triq.net>
@@ -1997,10 +2002,11 @@ Layout appears to be:
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
 */
-/*
+    /*
 TS-FT002 Wireless Ultrasonic Tank Liquid Level Meter With Temperature Sensor
 
-PPM with 500 us pulse, 464 us short gap (0), 948 us long gap (1), 1876 us packet gap, two packets per transmission.
+PPM with 500 us pulse, 464 us short gap (0), 948 us long gap (1), 1876 us packet gap, two packets
+per transmission.
 
 E.g. rtl_433 -R 0 -X 'n=TS-FT002T,m=OOK_PPM,s=500,l=1000,g=1200,r=2000,bits>=70'
 
@@ -2022,18 +2028,18 @@ Data layout:
 | 14,15    | Rain H, L (Value 0-256), not used
 | 16,17    | XOR checksum (include the preamble)
 */
-/* r_device ts_ft002 =  */{
-        name:        "TS-FT002 Wireless Ultrasonic Tank Liquid Level Meter With Temperature Sensor",
-        modulation:  "OOK_PULSE_PPM",
-        short_width: 464,
-        long_width:  948,
-        gap_limit:   1200,
-        reset_limit: 2000,
-        decodefn:   "ts_ft002_decoder",
-        disabled:    0,
-        fields:      "output_fields",
-},
-/** @file
+    /* r_device ts_ft002 =  */{
+      name: 'TS-FT002 Wireless Ultrasonic Tank Liquid Level Meter With Temperature Sensor',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 464,
+      long_width: 948,
+      gap_limit: 1200,
+      reset_limit: 2000,
+      decodefn: 'ts_ft002_decoder',
+      disabled: 0,
+      fields: 'output_fields',
+    },
+    /** @file
     Hyundai WS SENZOR Remote Temperature Sensor.
 
     This program is free software; you can redistribute it and/or modify
@@ -2041,7 +2047,7 @@ Data layout:
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
 */
-/**
+    /**
 Hyundai WS SENZOR Remote Temperature Sensor.
 
 - Transmit Interval: every ~33s
@@ -2063,18 +2069,18 @@ Hyundai WS SENZOR Remote Temperature Sensor.
 #define WS_MINREPEATS 4
 #define WS_REPEATS 23
 */
-/* r_device wssensor =  */{
-        name:        "Hyundai WS SENZOR Remote Temperature Sensor",
-        modulation:  "OOK_PULSE_PPM",
-        short_width: 1000,
-        long_width:  2000,
-        gap_limit:   2400,
-        reset_limit: 4400,
-        decodefn:   "wssensor_decode",
-        disabled:    0,
-        fields:      "output_fields",
-},
-/* X10 sensor
+    /* r_device wssensor =  */{
+      name: 'Hyundai WS SENZOR Remote Temperature Sensor',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 1000,
+      long_width: 2000,
+      gap_limit: 2400,
+      reset_limit: 4400,
+      decodefn: 'wssensor_decode',
+      disabled: 0,
+      fields: 'output_fields',
+    },
+    /* X10 sensor
  *
  * Stub for decoding test data only
  *
@@ -2085,18 +2091,18 @@ Hyundai WS SENZOR Remote Temperature Sensor.
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  */
-/* r_device X10_RF =  */{
-    name:           "X10 RF",
-    modulation:     "OOK_PULSE_PPM",
-    short_width:    500,  // Short gap 500Âµs
-    long_width:     1680, // Long gap 1680Âµs
-    gap_limit:      2800, // Gap after sync is 4.5ms (1125)
-    reset_limit:    6000, // Gap seen between messages is ~40ms so let's get them individually
-    decodefn:      "x10_rf_callback",
-    disabled:       1,
-    fields:         "output_fields",
-},
-/*
+    /* r_device X10_RF =  */{
+      name: 'X10 RF',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 500, // Short gap 500Âµs
+      long_width: 1680, // Long gap 1680Âµs
+      gap_limit: 2800, // Gap after sync is 4.5ms (1125)
+      reset_limit: 6000, // Gap seen between messages is ~40ms so let's get them individually
+      decodefn: 'x10_rf_callback',
+      disabled: 1,
+      fields: 'output_fields',
+    },
+    /*
  * X10 Security sensor decoder.
  *
  * Each packet starts with a sync pulse of 9000 us and 4500 us gap.
@@ -2120,17 +2126,17 @@ Hyundai WS SENZOR Remote Temperature Sensor.
  * (at your option) any later version.
  *
  */
-/* r_device definition */
-/* r_device x10_sec =  */{
-    name:           "X10 Security",
-    modulation:     "OOK_PULSE_PPM",
-    short_width:    500,  // Short gap 500Âµs
-    long_width:     1680, // Long gap 1680Âµs
-    gap_limit:      2200, // Gap after sync is 4.5ms (1125)
-    reset_limit:    6000,
-    decodefn:      "x10_sec_callback",
-    disabled:       0,
-    fields:         "output_fields",
-},
-]
+    /* r_device definition */
+    /* r_device x10_sec =  */{
+      name: 'X10 Security',
+      modulation: 'OOK_PULSE_PPM',
+      short_width: 500, // Short gap 500Âµs
+      long_width: 1680, // Long gap 1680Âµs
+      gap_limit: 2200, // Gap after sync is 4.5ms (1125)
+      reset_limit: 6000,
+      decodefn: 'x10_sec_callback',
+      disabled: 0,
+      fields: 'output_fields',
+    },
+  ],
 };

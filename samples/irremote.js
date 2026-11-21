@@ -1,11 +1,11 @@
 // https://github.com/z3t0/Arduino-IRremote
-//==============================================================================
+// =============================================================================
 //                         AAA   IIIII  W   W   AAA
 //                        A   A    I    W   W  A   A
 //                        AAAAA    I    W W W  AAAAA
 //                        A   A    I    W W W  A   A
 //                        A   A  IIIII   WWW   A   A
-//==============================================================================
+// =============================================================================
 
 // Based off the RC-T501 RCU
 // Lirc file http://lirc.sourceforge.net/remotes/aiwa/RC-T501
@@ -14,7 +14,7 @@
 #define AIWA_RC_T501_BITS          15
 #define AIWA_RC_T501_PRE_BITS      26
 #define AIWA_RC_T501_POST_BITS      1
-#define AIWA_RC_T501_SUM_BITS    (AIWA_RC_T501_PRE_BITS + AIWA_RC_T501_BITS + AIWA_RC_T501_POST_BITS)
+#define AIWA_RC_T501_SUM_BITS (AIWA_RC_T501_PRE_BITS + AIWA_RC_T501_BITS + AIWA_RC_T501_POST_BITS)
 #define AIWA_RC_T501_HDR_MARK    8800
 #define AIWA_RC_T501_HDR_SPACE   4500
 #define AIWA_RC_T501_BIT_MARK     500
@@ -31,13 +31,13 @@
 // the timing values from it, it is obvious that Denon have a range of
 // different timings and protocols ...the values here work for my AVR-3801 Amp!
 
-//==============================================================================
+// =============================================================================
 //                    DDDD   EEEEE  N   N   OOO   N   N
 //                     D  D  E      NN  N  O   O  NN  N
 //                     D  D  EEE    N N N  O   O  N N N
 //                     D  D  E      N  NN  O   O  N  NN
 //                    DDDD   EEEEE  N   N   OOO   N   N
-//==============================================================================
+// =============================================================================
 /*
 #define BITS          14  // The number of bits in the command
 
@@ -49,13 +49,13 @@
 #define ZERO_SPACE   750  // The length of a Bit:Space for 0's
 */
 
-//==============================================================================
+// =============================================================================
 //                       DDDD   IIIII   SSSS  H   H
 //                        D  D    I    S      H   H
 //                        D  D    I     SSS   HHHHH
 //                        D  D    I        S  H   H
 //                       DDDD   IIIII  SSSS   H   H
-//==============================================================================
+// =============================================================================
 
 // Sharp and DISH support by Todd Treece ( http://unionbridge.org/design/ircommand )
 //
@@ -78,13 +78,13 @@
 #define DISH_RPT_SPACE   6200
 */
 
-//==============================================================================
+// =============================================================================
 //                             JJJJJ  V   V   CCCC
 //                               J    V   V  C
 //                               J     V V   C
 //                             J J     V V   C
 //                              J       V     CCCC
-//==============================================================================
+// =============================================================================
 /*
 #define JVC_BITS           16
 #define JVC_HDR_MARK     8000
@@ -94,19 +94,19 @@
 #define JVC_ZERO_SPACE    550
 #define JVC_RPT_LENGTH  60000
 */
-//+=============================================================================
+// +=============================================================================
 // JVC does NOT repeat by sending a separate code (like NEC does).
 // The JVC protocol repeats by skipping the header.
 // To send a JVC repeat signal, send the original code value
 //   and set 'repeat' to true
 //
-//==============================================================================
+// =============================================================================
 //                               L       GGGG
 //                               L      G
 //                               L      G  GG
 //                               L      G   G
 //                               LLLLL   GGG
-//==============================================================================
+// =============================================================================
 /*
 #define LG_BITS 28
 
@@ -117,15 +117,15 @@
 #define LG_ZERO_SPACE 550
 #define LG_RPT_LENGTH 60000
 */
-//==============================================================================
+// =============================================================================
 //    L       EEEEEE   EEEE    OOOO
 //    L       E       E       O    O
 //    L       EEEE    E  EEE  O    O
 //    L       E       E    E  O    O    LEGO Power Functions
 //    LLLLLL  EEEEEE   EEEE    OOOO     Copyright (c) 2016, 2017 Philipp Henkel
-//==============================================================================
+// =============================================================================
 
-//+=============================================================================
+// +=============================================================================
 //
 /*
 class LegoPfBitStreamEncoder {
@@ -143,13 +143,13 @@ class LegoPfBitStreamEncoder {
   static const uint8_t MESSAGE_BITS = 18;
   static const uint16_t MAX_MESSAGE_LENGTH = 16000;
 */
-//==============================================================================
+// =============================================================================
 //    MMMMM  IIIII TTTTT   SSSS  U   U  BBBB   IIIII   SSSS  H   H  IIIII
 //    M M M    I     T    S      U   U  B   B    I    S      H   H    I
 //    M M M    I     T     SSS   U   U  BBBB     I     SSS   HHHHH    I
 //    M   M    I     T        S  U   U  B   B    I        S  H   H    I
 //    M   M  IIIII   T    SSSS    UUU   BBBBB  IIIII  SSSS   H   H  IIIII
-//==============================================================================
+// =============================================================================
 
 // Looks like Sony except for timings, 48 chars of data and time/space different
 /*
@@ -161,17 +161,18 @@ class LegoPfBitStreamEncoder {
 #define MITSUBISHI_HDR_SPACE  350 //  7*50+100
 #define MITSUBISHI_ONE_MARK 1950 // 41*50-100
 #define MITSUBISHI_ZERO_MARK  750 // 17*50-100
-// #define MITSUBISHI_DOUBLE_SPACE_USECS  800  // usually ssee 713 - not using ticks as get number wrapround
+// #define MITSUBISHI_DOUBLE_SPACE_USECS 800
+// usually ssee 713 - not using ticks as get number wrapround
 // #define MITSUBISHI_RPT_LENGTH 45000
 */
 
-//==============================================================================
+// =============================================================================
 //                           N   N  EEEEE   CCCC
 //                           NN  N  E      C
 //                           N N N  EEE    C
 //                           N  NN  E      C
 //                           N   N  EEEEE   CCCC
-//==============================================================================
+// =============================================================================
 /*
 #define NEC_BITS          32
 #define NEC_HDR_MARK    9000 Index 4, Length 16
@@ -191,13 +192,13 @@ psi 560, [1,3,4,8,16,64]
 Repeat 4206
 */
 
-//==============================================================================
+// =============================================================================
 //       PPPP    AAA   N   N   AAA    SSSS   OOO   N   N  IIIII   CCCC
 //       P   P  A   A  NN  N  A   A  S      O   O  NN  N    I    C
 //       PPPP   AAAAA  N N N  AAAAA   SSS   O   O  N N N    I    C
 //       P      A   A  N  NN  A   A      S  O   O  N  NN    I    C
 //       P      A   A  N   N  A   A  SSSS    OOO   N   N  IIIII   CCCC
-//==============================================================================
+// =============================================================================
 /*
 #define PANASONIC_BITS          48
 #define PANASONIC_HDR_MARK    3502
@@ -207,11 +208,12 @@ Repeat 4206
 #define PANASONIC_ZERO_SPACE   400
 
   micros: [ 457, 1310, 1644, 3533, 101502, [length]: 5 ],
-  psi: '3200010000000000000000000000010000000000000001000100000101010000000100010101010000010000000000000104'
+  psi: '32000100000000000000000000000100000000000000010001'
+     + '00000101010000000100010101010000010000000000000104'
 32c0-0100000000000100000001010011100010111100100000014
 32c0x40040538BC81-4
 */
-//==============================================================================
+// =============================================================================
 // RRRR    CCCC  55555
 // R   R  C      5
 // RRRR   C      5555
@@ -220,13 +222,13 @@ Repeat 4206
 //
 // NB: First bit must be a one (start bit)
 //
-/* bi-phase / manchester encoding !*/
+/* bi-phase / manchester encoding ! */
 /*
 #define MIN_RC5_SAMPLES     11
 #define RC5_T1             889
 #define RC5_RPT_LENGTH   46000
 */
-//+=============================================================================
+// +=============================================================================
 // RRRR    CCCC   6666
 // R   R  C      6
 // RRRR   C      6666
@@ -235,7 +237,7 @@ Repeat 4206
 //
 // NB : Caller needs to take care of flipping the toggle bit
 //
-/* bi-phase / manchester encoding !*/
+/* bi-phase / manchester encoding ! */
 /*
 #define MIN_RC6_SAMPLES      1
 #define RC6_HDR_MARK      2666
@@ -249,13 +251,13 @@ Repeat 4206
          3101000022000000000000000000000010010005'
 
 */
-//==============================================================================
+// =============================================================================
 //              SSSS   AAA    MMM    SSSS  U   U  N   N   GGGG
 //             S      A   A  M M M  S      U   U  NN  N  G
 //              SSS   AAAAA  M M M   SSS   U   U  N N N  G  GG
 //                 S  A   A  M   M      S  U   U  N  NN  G   G
 //             SSSS   A   A  M   M  SSSS    UUU   N   N   GGG
-//==============================================================================
+// =============================================================================
 /*
 #define SAMSUNG_BITS          32
 #define SAMSUNG_HDR_MARK    5000
@@ -265,13 +267,13 @@ Repeat 4206
 #define SAMSUNG_ZERO_SPACE   560
 #define SAMSUNG_RPT_SPACE   2250
 */
-//==============================================================================
+// =============================================================================
 //                      SSSS   AAA   N   N  Y   Y   OOO
 //                     S      A   A  NN  N   Y Y   O   O
 //                      SSS   AAAAA  N N N    Y    O   O
 //                         S  A   A  N  NN    Y    O   O
 //                     SSSS   A   A  N   N    Y     OOO
-//==============================================================================
+// =============================================================================
 
 // I think this is a Sanyo decoder:  Serial = SA 8650B
 // Looks like Sony except for timings, 48 chars of data and time/space different
@@ -281,16 +283,16 @@ Repeat 4206
 #define SANYO_HDR_SPACE             950  // seen 950
 #define SANYO_ONE_MARK             2400  // seen 2400
 #define SANYO_ZERO_MARK             700  // seen 700
-#define SANYO_DOUBLE_SPACE_USECS    800  // usually ssee 713 - not using ticks as get number wrapround
+#define SANYO_DOUBLE_SPACE_USECS 800// usually ssee 713 - not using ticks as get number wrapround
 #define SANYO_RPT_LENGTH          45000
 */
-//==============================================================================
+// =============================================================================
 //                       SSSS  H   H   AAA   RRRR   PPPP
 //                      S      H   H  A   A  R   R  P   P
 //                       SSS   HHHHH  AAAAA  RRRR   PPPP
 //                          S  H   H  A   A  R  R   P
 //                      SSSS   H   H  A   A  R   R  P
-//==============================================================================
+// =============================================================================
 
 // Sharp and DISH support by Todd Treece: http://unionbridge.org/design/ircommand
 //
@@ -314,13 +316,13 @@ Repeat 4206
 
 #define SHARP_TOGGLE_MASK  0x3FF
 */
-//==============================================================================
+// =============================================================================
 //                           SSSS   OOO   N   N  Y   Y
 //                          S      O   O  NN  N   Y Y
 //                           SSS   O   O  N N N    Y
 //                              S  O   O  N  NN    Y
 //                          SSSS    OOO   N   N    Y
-//==============================================================================
+// =============================================================================
 /*
 #define SONY_BITS                   12
 #define SONY_HDR_MARK             2400
@@ -328,15 +330,15 @@ Repeat 4206
 #define SONY_ONE_MARK             1200
 #define SONY_ZERO_MARK             600
 #define SONY_RPT_LENGTH          45000
-#define SONY_DOUBLE_SPACE_USECS    500  // usually ssee 713 - not using ticks as get number wrapround
+#define SONY_DOUBLE_SPACE_USECS 500// usually ssee 713 - not using ticks as get number wrapround
 */
-//==============================================================================
+// =============================================================================
 //               W   W  H   H  Y   Y N   N TTTTT EEEEE  RRRRR
 //               W   W  H   H   Y Y  NN  N   T   E      R   R
 //               W W W  HHHHH    Y   N N N   T   EEE    RRRR
 //               W W W  H   H    Y   N  NN   T   E      R  R
 //                WWW   H   H    Y   N   N   T   EEEEE  R   R
-//==============================================================================
+// =============================================================================
 /*
 #define WHYNTER_BITS          32
 #define WHYNTER_HDR_MARK    2850
