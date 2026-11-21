@@ -83,6 +83,21 @@ test('format includes micros when present', () => {
 
 // --- analyse ---
 
+test('analyse returns psx and writes nothing to stdout', () => {
+  const p = new PulseSpaceIndex('00010001', null, 1, 'ook433');
+  const logs = [];
+  const orig = console.log;
+  console.log = (...args) => logs.push(args);
+  let result;
+  try {
+    result = p.analyse();
+  } finally {
+    console.log = orig;
+  }
+  assert.equal(result, p.psx);
+  assert.deepEqual(logs, []);
+});
+
 test('analyse sets psx for simple PDM signal', () => {
   const p = new PulseSpaceIndex('00010001', null, 1, 'ook433');
   p.analyse();

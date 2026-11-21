@@ -2,6 +2,15 @@
 
 All notable changes to pulsespaceindex are documented here.
 
+## [Unreleased]
+
+### Changed
+- **`analyse()` no longer prints.** It returns `psx` and writes nothing to
+  stdout; set `DEBUG=psio` to log each result through the `debug` module.
+  Library code that relied on the printed line should call `print()` (or use
+  `format()`) after `analyse()`. Command-line output is unchanged: the CLI now
+  calls `print()` itself.
+
 ## [1.1.0] - 2026-11-06
 
 ### Added

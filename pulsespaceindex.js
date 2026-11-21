@@ -10,6 +10,7 @@ const debug = require('debug')('psi');
 const debugv = require('debug')('psiv');
 
 const debugm = require('debug')('psim');
+const debugo = require('debug')('psio');
 const readline = require('readline');
 const fs = require('fs');
 
@@ -756,9 +757,11 @@ class PulseSpaceIndex {
 
   /**
    * Run the full analysis pipeline on this.psi.
-   * Populates this.counts, this.ps01f, and this.psx, then calls print().
+   * Populates this.counts, this.ps01f, and this.psx. Writes nothing to stdout;
+   * set DEBUG=psio to log format() via the debug module.
    * When tryMan is true and timing qualifies (2:1 ratio, length ≥ 40),
    * tries Manchester then Differential Manchester before falling back to psix.
+   * @returns {string} this.psx
    */
   analyse() {
     const { psi } = this;
@@ -788,13 +791,14 @@ class PulseSpaceIndex {
           || this.tryDifferentialManchester(this.psi, this.ps01f);
         if (manResult) {
           this.psx = manResult;
-          this.print();
-          return;
+          debugo(this.format());
+          return this.psx;
         }
       }
     }
     this.psx = this.psix(this.psi, this.ps01f);
-    this.print();
+    debugo(this.format());
+    return this.psx;
   }
 
   /**
@@ -989,6 +993,7 @@ Options:
 
 Debug:
   DEBUG=psi  node pulsespaceindex.js <input>   basic output
+  DEBUG=psio                                   log each result (library use)
   DEBUG=psiv node pulsespaceindex.js <input>   verbose
   DEBUG=*    node pulsespaceindex.js <input>   all`);
     process.exit(inputFile ? 0 : 1);
@@ -1033,6 +1038,7 @@ Debug:
         psi = new PulseSpaceIndex(ps, sample.avgMicro, sample.frameCount, `NodoDueRkr:${sample.signalType}`);
       }
       psi.analyse();
+      psi.print();
       debug(psi);
     }
   } else { // assume csv or text
@@ -1054,6 +1060,7 @@ Debug:
         const psi = new PulseSpaceIndex(null);
         psi.microsToPsi(pulses, `rflink:${line}`, `rflink:${lc + 1}`);
         psi.analyse();
+        psi.print();
         debug(psi);
       } else if (line.includes('AA B1 ')) {
         // Tasmota Portisch Sonoff RFbridge v212:22:52.999 RSL: RESULT = {"Time":"2021-08-18T12:22:52","RfRaw":{"Data":"AA B1 03 0172 041A 2AF8 01010110010101010101011001010101010101100110010102 55"}}
@@ -1067,6 +1074,7 @@ Debug:
         const psi = new PulseSpaceIndex(null);
         psi.microsToPsi(pulses, line.match(/AA B1 .*55/), `Portisch Sorted:${lc + 1}`);
         psi.analyse();
+        psi.print();
         debug(psi);
       } else if (line.includes('RFLink')) {
         debugv('Rflink Domoticzlog ', line);
@@ -1080,6 +1088,7 @@ Debug:
         const psi = new PulseSpaceIndex(null);
         psi.microsToPsi(pulses, `pilight:${line}`, `pilight:${protocol}`);
         psi.analyse();
+        psi.print();
         debug(psi);
       }
       lc++;
