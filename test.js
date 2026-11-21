@@ -56,6 +56,111 @@ test('microsToPsi handles single-value signal', () => {
   assert.equal(p.psi, '0000');
 });
 
+test('microsToPsi rejects NaN input without throwing', () => {
+  const p = new PulseSpaceIndex(null);
+  let ok;
+  assert.doesNotThrow(() => { ok = p.microsToPsi([500, NaN, 500, 1500], 'test', 'test'); });
+  assert.equal(ok, false);
+  assert.equal(p.psi, null);
+  assert.equal(p.count, 0);
+  assert.equal(p.analyse(), '');
+  assert.equal(p.format(), "0  '' test");
+});
+
+test('microsToPsi rejects empty, non-array and negative input', () => {
+  for (const bad of [[], null, [500, -1], [500, Infinity], ['500', 1500]]) {
+    const p = new PulseSpaceIndex(null);
+    assert.equal(p.microsToPsi(bad, 'test', 'test'), false, JSON.stringify(bad));
+    assert.equal(p.psi, null);
+  }
+});
+
+test('microsToPsi returns true for valid input', () => {
+  const p = new PulseSpaceIndex(null);
+  assert.equal(p.microsToPsi([500, 1500, 500, 1500], 'test', 'test'), true);
+});
+
+// --- parseLine ---
+
+const kakuLine = "132 , '130102010202010102020101020201010202010201010201020201010202010102020101020102020102010102010202010201010201020102020101020102020104' , 5 , 150 300 1230 2430 6990 , rflink:1";
+
+test('parseLine reads PSI text lines (samples/kaku.txt)', () => {
+  const r = PulseSpaceIndex.parseLine(kakuLine, 1);
+  assert.ok(r.psi, 'psi parsed');
+  assert.equal(r.psi.count, 132);
+  assert.deepEqual(r.psi.micros, [150, 300, 1230, 2430, 6990]);
+  assert.equal(r.psi.signalType, 'rflink:1');
+  assert.ok(r.psi.psi.startsWith('1301020102'));
+  assert.equal(r.psi.analyse(), '010213:13x5999a59996969596-04');
+});
+
+test('parseLine skips PSI text with an index beyond the timing buckets', () => {
+  const r = PulseSpaceIndex.parseLine("4 , '0105' , 2 , 100 200 , x", 1);
+  assert.ok(!r.psi);
+  assert.match(r.skip, /no timing bucket/);
+});
+
+test('parseLine skips current psx output lines (samples/debugkaku20210823.csv)', () => {
+  for (const line of [
+    "135 378,880,6990 '001102:xffffffff92492724f9fffff39f24e7fff-11' rflink:1",
+    "132 143,1200,2490,6990 '000102:02x6aa99595999a9555-03' rflink:8 NewKaku;ID=01fa22ae;SWITCH=1;CMD=OFF;",
+    "0 '000002:' pimatic",
+  ]) {
+    assert.deepEqual(PulseSpaceIndex.parseLine(line, 1), { skip: 'already analysed psx output' });
+  }
+});
+
+test('parseLine skips comments, RFLink log lines and empty lines', () => {
+  assert.equal(PulseSpaceIndex.parseLine('#pilight', 1).skip, 'comment');
+  assert.equal(PulseSpaceIndex.parseLine('2021 RFLink: started', 1).skip, 'RFLink Domoticz log');
+  assert.equal(PulseSpaceIndex.parseLine('', 1).skip, 'empty line');
+});
+
+test('parseLine skips unrecognised lines instead of throwing', () => {
+  let r;
+  assert.doesNotThrow(() => { r = PulseSpaceIndex.parseLine('hello world foo', 3); });
+  assert.deepEqual(r, { skip: 'unrecognised line' });
+});
+
+test('parseLine reads pilight lines', () => {
+  const r = PulseSpaceIndex.parseLine('ev1527 253 759 759 253 253 759 759 253', 1);
+  assert.ok(r.psi);
+  assert.equal(r.psi.signalType, 'pilight:ev1527');
+  assert.equal(r.psi.psi, '01100110');
+});
+
+test('parseLine reads RFLink Pulses= lines', () => {
+  const r = PulseSpaceIndex.parseLine('20;B9;DEBUG;Pulses=8;Pulses(uSec)=300,900,300,900,900,300,300,900;', 7);
+  assert.ok(r.psi);
+  assert.equal(r.psi.signalType, 'rflink:7');
+  assert.equal(r.psi.psi, '01011001');
+});
+
+test('parseLine skips RFLink lines with non-numeric pulses', () => {
+  const r = PulseSpaceIndex.parseLine('20;B9;DEBUG;Pulses=2;Pulses(uSec)=abc,def;', 1);
+  assert.ok(!r.psi);
+  assert.match(r.skip, /not numeric/);
+});
+
+// --- CLI ---
+
+const { execFileSync } = require('node:child_process');
+const path = require('node:path');
+
+function runCli(sample) {
+  return execFileSync(process.execPath, [path.join(__dirname, 'pulsespaceindex.js'), path.join(__dirname, 'samples', sample)], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+}
+
+test('CLI runs samples/kaku.txt without crashing', () => {
+  const out = runCli('kaku.txt').trim().split('\n');
+  assert.equal(out.length, 224);
+  assert.equal(out[0], "132 150,300,1230,2430,6990 '010213:13x5999a59996969596-04' rflink:1");
+});
+
+test('CLI runs samples/debugkaku20210823.csv without crashing', () => {
+  assert.equal(runCli('debugkaku20210823.csv'), '');
+});
+
 // --- format ---
 
 test('format returns a non-empty string', () => {

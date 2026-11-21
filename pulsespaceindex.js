@@ -764,7 +764,10 @@ class PulseSpaceIndex {
    * @returns {string} this.psx
    */
   analyse() {
-    const { psi } = this;
+    if (this.psi === null) { // no signal, e.g. microsToPsi rejected the input
+      this.psx = '';
+      return this.psx;
+    }
     this.countPulseSpace();
     // AGC/Signal detection may have single short pulse value
     // likely wrong: merge with normal short pulse
@@ -809,9 +812,22 @@ class PulseSpaceIndex {
    * @param {number[]} pulses     Alternating pulse/space durations in µs.
    * @param {string}   comment    Debug label (not stored).
    * @param {string}   signalType Label stored in this.signalType.
+   * @returns {boolean} false (psi set to null) when pulses is empty or holds
+   *   a value that is not a finite number >= 0; true otherwise.
    */
   microsToPsi(pulses, comment, signalType) { // convert pulseSpace micro signal to psi
     debugm('microsToPsi ', comment);
+    this.signalType = signalType;
+    if (!Array.isArray(pulses) || pulses.length === 0
+      || pulses.some((x) => typeof x !== 'number' || !Number.isFinite(x) || x < 0)) {
+      // reject instead of filtering: dropping a value would swap pulse/space parity
+      debugm('microsToPsi rejected: empty or non-numeric pulses', comment);
+      this.psi = null;
+      this.count = 0;
+      this.micros = [];
+      this.frameCount = 1;
+      return false;
+    }
     const repeat = 0;
     const pulseSpaceCount = pulses.length;
     const psValue = [];
@@ -954,7 +970,92 @@ class PulseSpaceIndex {
     this.count = this.psi.length;
     this.micros = ms;
     this.frameCount = repeat + 1;
-    this.signalType = signalType;
+    return true;
+  }
+
+  /**
+   * Parse one line of a text/CSV input file (CLI input formats).
+   * Does not call analyse().
+   * @param {string} line
+   * @param {number} lineNo 1-based line number, used in labels.
+   * @returns {{psi: PulseSpaceIndex}|{skip: string}} skip holds the reason a
+   *   line produced no signal (comment, log line, unrecognised or bad data).
+   */
+  static parseLine(line, lineNo = 1) {
+    if (line.includes('#')) {
+      return { skip: 'comment' };
+    }
+    if (line.includes('Pulses=')) {
+      // input like 20;B9;DEBUG;Pulses=132;Pulses(uSec)=200,2550,150,...;
+      // match )= until eol or ; split on ,
+      const m = line.match(/\)=([^;]+)/);
+      if (!m) {
+        return { skip: 'RFLink line without Pulses(uSec)=' };
+      }
+      const pulses = Array.from(m[1].split(','), x => Number(x));
+      const psi = new PulseSpaceIndex(null);
+      if (!psi.microsToPsi(pulses, `rflink:${line}`, `rflink:${lineNo}`)) {
+        return { skip: 'RFLink pulses not numeric' };
+      }
+      return { psi };
+    }
+    if (line.includes('AA B1 ')) {
+      // Tasmota Portisch Sonoff RFbridge v212:22:52.999 RSL: RESULT = {"Time":"2021-08-18T12:22:52","RfRaw":{"Data":"AA B1 03 0172 041A 2AF8 01010110010101010101011001010101010101100110010102 55"}}
+      const m = line.match(/AA B1 .*55/);
+      if (!m) {
+        return { skip: 'Portisch line without trailing 55' };
+      }
+      const ptData = m[0].split(' ');
+      const nrPulseLengths = Number(ptData[2]);
+      const pulseLengths = Array.from(ptData.slice(3, 3 + nrPulseLengths), x => parseInt(x, 16));
+      const ppsi = ptData[3 + nrPulseLengths] || '';
+      // portisch does not have buckets in time sequence so convert to pulses and use microsToPsi...
+      // Als F protection
+      const pulses = Array.from(ppsi, x => (((parseInt(x, 16) & 0x07) < pulseLengths.length) ? pulseLengths[parseInt(x, 16) & 0x07] : (pulseLengths.length - 1)));
+      const psi = new PulseSpaceIndex(null);
+      if (!psi.microsToPsi(pulses, m, `Portisch Sorted:${lineNo}`)) {
+        return { skip: 'Portisch data not numeric' };
+      }
+      return { psi };
+    }
+    if (line.includes('RFLink')) {
+      return { skip: 'RFLink Domoticz log' };
+    }
+    // PSI text, older print() format (samples/kaku.txt):
+    //   <count> , '<psi>' , <nr buckets> , <µs1> <µs2> ... , <signalType>
+    let m = line.match(/^\s*(\d+)\s*,\s*'([0-9a-fA-F]+)'\s*,\s*(\d+)\s*,\s*([\d\s]+?)\s*,\s*(.*?)\s*$/);
+    if (m) {
+      const psiStr = m[2].toLowerCase();
+      const micros = m[4].split(/\s+/).map(Number);
+      if (Number(m[1]) !== psiStr.length || Number(m[3]) !== micros.length) {
+        debugv('PSI text count mismatch', lineNo, m[1], psiStr.length, m[3], micros.length);
+      }
+      const maxIndex = Math.max(...Array.from(psiStr, (x) => parseInt(x, 16)));
+      if (maxIndex >= micros.length) {
+        return { skip: `PSI index ${maxIndex} has no timing bucket` };
+      }
+      return { psi: new PulseSpaceIndex(psiStr, micros, 1, m[5] || `psi:${lineNo}`) };
+    }
+    // Current print() output: <count> [<µs1>,<µs2>,...] '<psx>' <signalType> ...
+    // psx is an analysis result and cannot be turned back into a signal.
+    m = line.match(/^\s*\d+\s+(?:[\d,]+\s+)?'[^']*'/);
+    if (m) {
+      return { skip: 'already analysed psx output' };
+    }
+    if (line.trim() === '') {
+      return { skip: 'empty line' };
+    }
+    // input like ev1527 253 759 759 253 759...
+    // split on space skip first element
+    const pulsess = line.split(' ');
+    const protocol = pulsess[0];
+    pulsess.shift();
+    const pulses = Array.from(pulsess, x => Number(x));
+    const psi = new PulseSpaceIndex(null);
+    if (!psi.microsToPsi(pulses, `pilight:${line}`, `pilight:${protocol}`)) {
+      return { skip: 'unrecognised line' };
+    }
+    return { psi };
   }
 }
 
@@ -986,6 +1087,10 @@ Input formats:
                  RFLink   Pulses(uSec)=200,2550,...
                  Tasmota  AA B1 <nr> <buckets...> <data> 55
                  pilight  <protocol> <µs1> <µs2> ...
+                 PSI text <count> , '<psi>' , <n> , <µs0> <µs1> ... , <name>
+               Lines in the current output format (<count> <µs,...> '<psx>' ...)
+               are skipped: psx is a result, not pulse data.
+               Other unrecognised lines are skipped with a warning on stderr.
 
 Options:
   -h, --help     Show this help
@@ -1049,49 +1154,29 @@ Debug:
       crlfDelay: Infinity,
     });
 
+    const quietSkips = ['comment', 'RFLink Domoticz log', 'empty line'];
+    let psxLines = 0;
     rl.on('line', (line) => {
-      if (line.includes('#')) {
-        // comment
-        debugv('comment ', line);
-      } else if (line.includes('Pulses=')) {
-        // input like 20;B9;DEBUG;Pulses=132;Pulses(uSec)=200,2550,150,...;
-        // match )= until eol or ; split on ,
-        const pulses = Array.from(line.match(/\)=([^;]+)/)[1].split(','), x => Number(x));
-        const psi = new PulseSpaceIndex(null);
-        psi.microsToPsi(pulses, `rflink:${line}`, `rflink:${lc + 1}`);
-        psi.analyse();
-        psi.print();
-        debug(psi);
-      } else if (line.includes('AA B1 ')) {
-        // Tasmota Portisch Sonoff RFbridge v212:22:52.999 RSL: RESULT = {"Time":"2021-08-18T12:22:52","RfRaw":{"Data":"AA B1 03 0172 041A 2AF8 01010110010101010101011001010101010101100110010102 55"}}
-        const ptData = line.match(/AA B1 .*55/)[0].split(' ');
-        const nrPulseLengths = Number(ptData[2]);
-        const pulseLengths = Array.from(ptData.slice(3, 3 + nrPulseLengths), x => parseInt(x, 16));
-        const ppsi = ptData[3 + nrPulseLengths];
-        // portisch does not have buckets in time sequence so convert to pulses and use microsToPsi...
-        // Als F protection
-        const pulses = Array.from(ppsi, x => (((parseInt(x, 16) & 0x07) < pulseLengths.length) ? pulseLengths[parseInt(x, 16) & 0x07] : (pulseLengths.length - 1)));
-        const psi = new PulseSpaceIndex(null);
-        psi.microsToPsi(pulses, line.match(/AA B1 .*55/), `Portisch Sorted:${lc + 1}`);
-        psi.analyse();
-        psi.print();
-        debug(psi);
-      } else if (line.includes('RFLink')) {
-        debugv('Rflink Domoticzlog ', line);
-      } else {
-        // input like ev1527 253 759 759 253 759...
-        // split on space skip first element
-        const pulsess = line.split(' ');
-        const protocol = pulsess[0];
-        pulsess.shift();
-        const pulses = Array.from(pulsess, x => Number(x));
-        const psi = new PulseSpaceIndex(null);
-        psi.microsToPsi(pulses, `pilight:${line}`, `pilight:${protocol}`);
-        psi.analyse();
-        psi.print();
-        debug(psi);
-      }
       lc++;
+      const r = PulseSpaceIndex.parseLine(line, lc);
+      if (r.psi) {
+        r.psi.analyse();
+        r.psi.print();
+        debug(r.psi);
+      } else if (quietSkips.includes(r.skip)) {
+        debugv(r.skip, line);
+      } else if (r.skip === 'already analysed psx output') {
+        debugv(r.skip, line);
+        psxLines++;
+      } else {
+        console.error(`${inputFile}:${lc}: skipped, ${r.skip}`);
+        debugv(line);
+      }
+    });
+    rl.on('close', () => {
+      if (psxLines > 0) {
+        console.error(`${inputFile}: skipped ${psxLines} line(s) of pulsespaceindex psx output (already analysed, no pulse data)`);
+      }
     });
   }
 }
