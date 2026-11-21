@@ -10,6 +10,22 @@ All notable changes to pulsespaceindex are documented here.
   Library code that relied on the printed line should call `print()` (or use
   `format()`) after `analyse()`. Command-line output is unchanged: the CLI now
   calls `print()` itself.
+- **`microsToPsi()` rejects bad input** (empty, non-array, NaN, Infinity,
+  negative or non-number values) instead of throwing. It returns `false` and
+  sets `psi` to `null`; `analyse()` then returns `''`. On valid input it
+  returns `true`.
+
+### Added
+- **`PulseSpaceIndex.parseLine(line, lineNo)`**: the CLI's text/CSV line
+  parsing, now usable and testable on its own.
+- **PSI text input** (`samples/kaku.txt`): lines of the older output format
+  `<count> , '<psi>' , <n> , <µs0> <µs1> ... , <name>` are analysed directly.
+
+### Fixed
+- `samples/kaku.txt` and `samples/debugkaku20210823.csv` no longer crash the
+  CLI. Lines in the current output format (`<count> <µs,...> '<psx>' ...`) are
+  skipped with one summary on stderr, since psx is a result, not pulse data.
+  Other unrecognised lines are skipped with a per-line warning on stderr.
 
 ## [1.1.0] - 2026-11-06
 
