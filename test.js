@@ -1,7 +1,7 @@
-'use strict';
-
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
+const { execFileSync } = require('node:child_process');
+const path = require('node:path');
 const PulseSpaceIndex = require('./pulsespaceindex');
 
 // --- constructor ---
@@ -43,7 +43,8 @@ test('microsToPsi clusters timing values and builds psi', () => {
   // alternating T=500µs (idx 0) and 3T=1500µs (idx 1) spaces
   p.microsToPsi(
     [500, 1500, 500, 1500, 500, 1500, 500, 1500],
-    'test', 'test'
+    'test',
+    'test',
   );
   assert.equal(p.micros.length, 2);
   assert.equal(p.psi, '01010101');
@@ -68,11 +69,11 @@ test('microsToPsi rejects NaN input without throwing', () => {
 });
 
 test('microsToPsi rejects empty, non-array and negative input', () => {
-  for (const bad of [[], null, [500, -1], [500, Infinity], ['500', 1500]]) {
+  [[], null, [500, -1], [500, Infinity], ['500', 1500]].forEach((bad) => {
     const p = new PulseSpaceIndex(null);
     assert.equal(p.microsToPsi(bad, 'test', 'test'), false, JSON.stringify(bad));
     assert.equal(p.psi, null);
-  }
+  });
 });
 
 test('microsToPsi returns true for valid input', () => {
@@ -101,13 +102,13 @@ test('parseLine skips PSI text with an index beyond the timing buckets', () => {
 });
 
 test('parseLine skips current psx output lines (samples/debugkaku20210823.csv)', () => {
-  for (const line of [
+  [
     "135 378,880,6990 '001102:xffffffff92492724f9fffff39f24e7fff-11' rflink:1",
     "132 143,1200,2490,6990 '000102:02x6aa99595999a9555-03' rflink:8 NewKaku;ID=01fa22ae;SWITCH=1;CMD=OFF;",
     "0 '000002:' pimatic",
-  ]) {
+  ].forEach((line) => {
     assert.deepEqual(PulseSpaceIndex.parseLine(line, 1), { skip: 'already analysed psx output' });
-  }
+  });
 });
 
 test('parseLine skips comments, RFLink log lines and empty lines', () => {
@@ -143,9 +144,6 @@ test('parseLine skips RFLink lines with non-numeric pulses', () => {
 });
 
 // --- CLI ---
-
-const { execFileSync } = require('node:child_process');
-const path = require('node:path');
 
 function runCli(sample) {
   return execFileSync(process.execPath, [path.join(__dirname, 'pulsespaceindex.js'), path.join(__dirname, 'samples', sample)], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });

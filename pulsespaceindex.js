@@ -1,5 +1,3 @@
-/* eslint-disable no-plusplus */
-/* eslint-disable no-bitwise */
 // set DEBUG=*
 //     pulseSpace.sort((a,b) => a.ps - b.ps);
 // use header/footer pulse space conventions of lirc/pilight and nodo/rflink
@@ -13,6 +11,7 @@ const debugm = require('debug')('psim');
 const debugo = require('debug')('psio');
 const readline = require('readline');
 const fs = require('fs');
+const path = require('path');
 
 const psixPulse = 0;
 const psixSpace = 1;
@@ -21,7 +20,30 @@ const psixLength = 3; // enable for ... < psixLength; ++ loops
 const ps01f0 = 0;
 const ps01f1 = 2;
 const ps01fFrameHT = 4;
-const ps01fLength = 6; // enable for ... < ps01fLength; += psixPulseSpace loops
+
+/**
+ * Accumulates a psx string, inserting mode markers when the
+ * constant ('c0'/'c-') or hex ('x'/'-') mode changes.
+ */
+function sxBuilder(prefix) {
+  return {
+    sx: prefix,
+    hexMode: false,
+    constantMode: false,
+    add(data, constantMode = false, hexMode = false) {
+      if (this.constantMode !== constantMode) {
+        this.sx += (constantMode) ? 'c0' : 'c-';
+        this.constantMode = constantMode;
+        this.hexMode = false;
+      }
+      if (this.hexMode !== hexMode) {
+        this.sx += (hexMode) ? 'x' : '-';
+        this.hexMode = hexMode;
+      }
+      this.sx += data;
+    },
+  };
+}
 /**
  * Analyses OOK (On-Off Keying) RF pulse/space signals.
  *
@@ -128,18 +150,18 @@ class PulseSpaceIndex {
   //  Depending on the FrameCount data 1 may be a header or trailer value
   //  Assume optional partial start frame, 1 or more full frames, optional partial end frame...
   //  First pulse of a frame is often longer and last space of a frame is (always) longer.
-  //  Use this to determine framelength Header/Data/Trailer with maximum one strange Pulse/Space inside the data
-  //  So use the length between the 'non data pulses/spaces' as an indication of framecount and data versus header/trailer.
+  //  Use this to determine framelength Header/Data/Trailer
+  //  with maximum one strange Pulse/Space inside the data
+  //  So use the length between the 'non data pulses/spaces' as an indication
+  //  of framecount and data versus header/trailer.
   //
   detectPS01Values() {
-    const { psi } = this;
     const { counts } = this;
     // now check dominating pulse and space counts
     // max counts pulse and space counts
-    const maxDomCounts = 2;
     // convert to string '01'...
     // ps01f 0011
-    const ps01f = [0, 0, 0, 0, counts.length-1, counts.length-1];
+    const ps01f = [0, 0, 0, 0, counts.length - 1, counts.length - 1];
     const ps01fCounts = [0, 0, 0, 0, 0, 0]; // accumulated counts <= 0, <= 1, >= ps01fFrameHT
     const min01ValuesCount = 1; // max one start/one stop sync? was 3
 
@@ -154,7 +176,7 @@ class PulseSpaceIndex {
       for (let psix = 0; psix < psixPulseSpace; psix++) {
         if (typeof counts[i] === 'undefined') {
           debugv('Add counts[i]', i, maxI);
-          counts[i] = { i: i, t: null, ct: [0, 0, 0] }; // i.. shift gaps?
+          counts[i] = { i, t: null, ct: [0, 0, 0] }; // i.. shift gaps?
         }
         const ct = counts[i].ct[psix];
         if (ct > min01ValuesCount) {
@@ -176,16 +198,21 @@ class PulseSpaceIndex {
     if (counts[ps01f[ps01f0 + psixSpace]].ct[psixSpace] === 0) {
       ps01f[ps01f0 + psixSpace] = ps01f[ps01f1 + psixSpace];
     }
-    // ranges Always: ..0, Often ..1, Seldom: midSync (HeaderTrailer) , Trailer always (but discarded by may programs), Header often header/Trailer pulse/space
+    // ranges Always: ..0, Often ..1, Seldom: midSync (HeaderTrailer),
+    // Trailer always (but discarded by may programs), Header often header/Trailer pulse/space
     // complicated by 'first incomplete/last incomplete...'
     // extend ps01f with ht as first header/trailer index
-    // Use this to determine split values 0, 1, HT. Gap between 1 and HT may be midsync. 0=1 no diff...
-    // so 0<=Max0 <=Max01 < MinHT<=counts.length, HT becomes F for frame Header/Trailer or separator..
+    // Use this to determine split values 0, 1, HT.
+    // Gap between 1 and HT may be midsync. 0=1 no diff...
+    // so 0<=Max0 <=Max01 < MinHT<=counts.length,
+    // HT becomes F for frame Header/Trailer or separator..
     // Start with maxPulse and space >= maxPulse...
     const minFrameLength = 16;
     const maxps01fFrameHTCount = Math.round(this.psi.length / minFrameLength);
     for (let i = counts.length - 1; i > ps01f[ps01f0 + psixPulse]; --i) {
-      if ((i > ps01f[ps01f0 + psixSpace]) && (counts[i].ct[psixSpace] > 0) && (counts[i].ct[psixSpace] <= maxps01fFrameHTCount)) {
+      if ((i > ps01f[ps01f0 + psixSpace])
+        && (counts[i].ct[psixSpace] > 0)
+        && (counts[i].ct[psixSpace] <= maxps01fFrameHTCount)) {
         ps01f[ps01fFrameHT + psixSpace] = i;
       }
       if (counts[i].ct[psixPulse] > 0) {
@@ -205,19 +232,18 @@ class PulseSpaceIndex {
 
     // determine ps01fCounts...
     for (let i = 0; i < counts.length; i++) {
-        // 0/1: accumulate from lowest
-        for (let psix = 0; psix < psixPulseSpace; psix++) {
-          if (i <= ps01f[ps01f0 + psix]) {
-            ps01fCounts[ps01f0 + psix] += counts[i].ct[psix];
-          }
-          else if (i <= ps01f[ps01f1 + psix]) {
-            ps01fCounts[ps01f1 + psix] += counts[i].ct[psix];
-          }
-          // HT accumulate to max ps01f1 and ps01fFrameHT may overlap for now
-          if (i >= ps01f[ps01fFrameHT + psix]) {
-            ps01fCounts[ps01fFrameHT + psix] += counts[i].ct[psix];
-          }
-       }
+      // 0/1: accumulate from lowest
+      for (let psix = 0; psix < psixPulseSpace; psix++) {
+        if (i <= ps01f[ps01f0 + psix]) {
+          ps01fCounts[ps01f0 + psix] += counts[i].ct[psix];
+        } else if (i <= ps01f[ps01f1 + psix]) {
+          ps01fCounts[ps01f1 + psix] += counts[i].ct[psix];
+        }
+        // HT accumulate to max ps01f1 and ps01fFrameHT may overlap for now
+        if (i >= ps01f[ps01fFrameHT + psix]) {
+          ps01fCounts[ps01fFrameHT + psix] += counts[i].ct[psix];
+        }
+      }
     }
     debugv('ps01fCounts', ps01f, ps01fCounts);
     // ps01fFrameHT now has potential Header pulse and Trailer Space
@@ -225,10 +251,11 @@ class PulseSpaceIndex {
     // Stop on Header pulse and Trailer Space
     // Trailer Space: Next header pulse or header space?
     // Header pulse: next header space?
-// todo
-// frameSplit: none: no multiple frames
-// first split then check Trailer Space, Header Pulse, Header Space.. (position and occurences)...
-// rflink looses long Trailer spaces...
+    // todo
+    // frameSplit: none: no multiple frames
+    // first split then check Trailer Space, Header Pulse, Header Space..
+    // (position and occurences)...
+    // rflink looses long Trailer spaces...
     let headerPulseCount = 0;
     let headerSpaceCount = 0;
     let headerSpaceIndex = ps01f[ps01fFrameHT + psixSpace];
@@ -237,67 +264,72 @@ class PulseSpaceIndex {
     let shortFrameSplits = 0;
     let frameSplits = 0;
     let frameLength = minFrameLength;
-    const frameSplit = [];
     const s = this.psi;
 
-    for (let j = 0; j < s.length; ) {
+    for (let j = 0; j < s.length;) {
       if (j > 0) {
-        debugv('FrameSplit', j, frameStart, j-frameStart, headerPulseCount, headerSpaceCount, trailerSpaceCount);
-        // 3 situations: partial start frame, normal frame, Repeat frame (NEC) clear header, clear trailer 0 payload
+        debugv(
+          'FrameSplit',
+          j,
+          frameStart,
+          j - frameStart,
+          headerPulseCount,
+          headerSpaceCount,
+          trailerSpaceCount,
+        );
+        // 3 situations: partial start frame, normal frame,
+        // Repeat frame (NEC) clear header, clear trailer 0 payload
         if ((frameStart === 0 && (trailerSpaceCount === 1))
           || ((j - frameStart) >= minFrameLength)
           || ((trailerSpaceCount >= headerPulseCount) && (headerPulseCount >= frameSplits + 1))
-          ) {
+        ) {
           if (j - frameStart > frameLength) { // normal frame length...
             frameLength = j - frameStart;
           }
           frameStart = j;
           frameSplits++;
-        }
-        else { // todo NEC repeate frame 4206: Single data but clear header/trailer
-              // headerPulse + headerSpace + trailerSpace overrules minFrameLength...
+        } else { // todo NEC repeate frame 4206: Single data but clear header/trailer
+          // headerPulse + headerSpace + trailerSpace overrules minFrameLength...
           shortFrameSplits++;
         }
       }
       // optional header
-      if (s[j+psixPulse] >= ps01f[ps01fFrameHT + psixPulse]) {
+      if (s[j + psixPulse] >= ps01f[ps01fFrameHT + psixPulse]) {
         headerPulseCount++;
-      }
-      else if (s[j+psixPulse] > ps01f[ps01f1 + psixPulse]) {
+      } else if (s[j + psixPulse] > ps01f[ps01f1 + psixPulse]) {
         if (headerPulseCount > 0 && trailerSpaceCount > 0) {
-          ps01f[ps01fFrameHT + psixPulse] = s[j+psixPulse];
+          ps01f[ps01fFrameHT + psixPulse] = s[j + psixPulse];
           headerPulseCount++;
         }
       }
-      if (s[j+psixSpace] > ps01f[ps01f1 + psixSpace]) {
+      if (s[j + psixSpace] > ps01f[ps01f1 + psixSpace]) {
         headerSpaceCount++;
-        if (s[j+psixSpace] < headerSpaceIndex) {
-          headerSpaceIndex = s[j+psixSpace];
+        if (s[j + psixSpace] < headerSpaceIndex) {
+          headerSpaceIndex = s[j + psixSpace];
         }
       }
       j += 2;
       // skip data
       while ((j < s.length - 1)
         && (s[j + psixPulse] < ps01f[ps01fFrameHT + psixPulse])
-        && (s[j + psixSpace] < ps01f[ps01fFrameHT + psixSpace]))
-        {
-          j += 2;
-        }
+        && (s[j + psixSpace] < ps01f[ps01fFrameHT + psixSpace])) {
+        j += 2;
+      }
       // optional trailer
       if ((j < s.length - 1)
-        //&& (s[j + psixPulse] < ps01f[ps01fFrameHT + psixPulse])
+        // && (s[j + psixPulse] < ps01f[ps01fFrameHT + psixPulse])
         && (s[j + psixSpace] >= ps01f[ps01fFrameHT + psixSpace])) {
-          trailerSpaceCount++;
-          j += 2;
-        }
+        trailerSpaceCount++;
+        j += 2;
+      }
     }
     debugv('frameSplits', s.length, frameLength, frameStart, frameSplits, shortFrameSplits, headerPulseCount, headerSpaceCount, trailerSpaceCount);
-   // if (frameLength > minFrameLength) {
-   //   this.frameCount = Math.round(this.psi.length / frameLength);
-   // }
-   // else {
-      this.frameCount = frameSplits + 1;
-   // }
+    // if (frameLength > minFrameLength) {
+    //   this.frameCount = Math.round(this.psi.length / frameLength);
+    // }
+    // else {
+    this.frameCount = frameSplits + 1;
+    // }
 
     // Header (optional): pulse and/or space
     // Trailer (no signal) pulse only.
@@ -317,7 +349,6 @@ class PulseSpaceIndex {
 
     for (; i < counts.length; i++) {
       const maxDx = [0, 0, 0];
-      const s = this.psi;
       for (let j = 0; j < s.length; j++) {
         const dx = [0, 0, 0];
         for (;s[j] < i; j++) {
@@ -342,8 +373,7 @@ class PulseSpaceIndex {
     if (ps01f[ps01f1 + psixPulse] !== ps01f[ps01f0 + psixPulse]) {
       if (ps01fCounts[ps01f1 + psixPulse] > frameSplits + 1) {
         counts[ps01f[ps01f1 + psixPulse]].p = 1;
-      }
-      else {
+      } else {
         ps01f[ps01f1 + psixPulse] = ps01f[ps01f0 + psixPulse];
       }
     }
@@ -354,8 +384,7 @@ class PulseSpaceIndex {
 
     if (headerSpaceCount === 0 && trailerSpaceCount === 0) {
       ps01f[ps01fFrameHT + psixPulse] = 0; // no trailerSpace recorded
-    }
-    else {
+    } else {
       ps01f[ps01fFrameHT + psixSpace] = headerSpaceIndex;
     }
 
@@ -364,8 +393,7 @@ class PulseSpaceIndex {
     if (ps01f[ps01f1 + psixSpace] !== ps01f[ps01f0 + psixSpace]) {
       if (ps01fCounts[ps01f1 + psixSpace] > frameSplits + 1) {
         counts[ps01f[ps01f1 + psixSpace]].s = 1;
-      }
-      else {
+      } else {
         ps01f[ps01f1 + psixSpace] = ps01f[ps01f0 + psixSpace];
       }
     }
@@ -391,19 +419,6 @@ class PulseSpaceIndex {
     console.log(this.format());
   }
 
-  sxAdd(sx, data, constantMode = false, hexMode = false) {
-    if (sx.constantMode !== constantMode) {
-      sx.sx += (constantMode) ? 'c0' : 'c-';
-      sx.constantMode = constantMode;
-      sx.hexMode = false;
-    }
-    if (sx.hexMode !== hexMode) {
-      sx.sx += (hexMode) ? 'x' : '-';
-      sx.hexMode = hexMode;
-    }
-    sx.sx += data;
-  }
-
   /*
    * Compact l10t
    * x 4 0/1 bits to one hex digit
@@ -412,26 +427,20 @@ class PulseSpaceIndex {
    * todo: Manchester/Biphase
    * todo: Header/header data Trailer/Pause. Longer signal or repeated 1s
    */
+  // eslint-disable-next-line class-methods-use-this -- public method, keep instance API
   psix(s, ps01f) {
-    const dataType = ((ps01f[0] != ps01f[2]) ? 'p' : '') + ((ps01f[1] != ps01f[3]) ? 's' : '');
-    const sx = {
-      sx: `${ps01f}:`,
-      hexMode: false,
-      constantMode: false,
-      data0: [ps01f[0], ps01f[1]],
-      data1: [ps01f[2], ps01f[3]],
-      dataType,
-      start: 0,
-      end: s.length,
-    };
+    const dataType = ((ps01f[0] !== ps01f[2]) ? 'p' : '') + ((ps01f[1] !== ps01f[3]) ? 's' : '');
+    const sx = sxBuilder(`${ps01f}:`);
+    const data0 = [ps01f[0], ps01f[1]];
+    const data1 = [ps01f[2], ps01f[3]];
 
     // ps both s + previous, p + next
     // data both 01 (and) , header/trailer at least one > 1
     // alternate > 1 sections with <= 1 sections,
     // <=1 sections always start with pulse, end with space...
-    let i = sx.start;
+    let i = 0;
     let j = i;
-    const len = sx.end;
+    const len = s.length;
     debugv('psix', ps01f, sx);
     while (i < len) {
       const iLast = i;
@@ -440,32 +449,32 @@ class PulseSpaceIndex {
       let datax = '';
       let trailer = ''; // space
       // header optional > 1 section
-      while ((j < len - 1) && ((s[j] > sx.data1[psixPulse]) || (s[j + 1] > sx.data1[psixSpace]))) {
+      while ((j < len - 1) && ((s[j] > data1[psixPulse]) || (s[j + 1] > data1[psixSpace]))) {
         header += s[j++]; // pulse
         header += s[j++]; // space
       }
       if (j > i) {
         // debugv('header', header, i, j);
-        this.sxAdd(sx, header);
+        sx.add(header);
         i = j;
       }
 
       // data <= 1 section
       let dataNibble = '';
-      while ((j < len - 1) && ((s[j] <= sx.data1[psixPulse]) && (s[j + 1] <= sx.data1[psixSpace]))) {
+      while ((j < len - 1) && ((s[j] <= data1[psixPulse]) && (s[j + 1] <= data1[psixSpace]))) {
         if (dataType === 'ps') {
-          dataNibble += (s[j + 0] === sx.data0[psixPulse]) ? '0' : '1';
-          dataNibble += (s[j + 1] === sx.data0[psixSpace]) ? '0' : '1';
+          dataNibble += (s[j + 0] === data0[psixPulse]) ? '0' : '1';
+          dataNibble += (s[j + 1] === data0[psixSpace]) ? '0' : '1';
         } else if (dataType === 'p') {
-          dataNibble += (s[j + 0] === sx.data0[psixPulse]) ? '0' : '1';
+          dataNibble += (s[j + 0] === data0[psixPulse]) ? '0' : '1';
         } else { // 's'
-          dataNibble += (s[j + 1] === sx.data0[psixSpace]) ? '0' : '1';
+          dataNibble += (s[j + 1] === data0[psixSpace]) ? '0' : '1';
         }
         // debugv('dataNibble', dataNibble, j);
         if (dataNibble.length >= 4) {
           data += dataNibble;
           datax += parseInt(dataNibble, 2).toString(16);
-          this.sxAdd(sx, parseInt(dataNibble, 2).toString(16), false, true);
+          sx.add(parseInt(dataNibble, 2).toString(16), false, true);
           dataNibble = '';
         }
         j += 2;
@@ -473,14 +482,14 @@ class PulseSpaceIndex {
       if (dataNibble.length > 0) {
         data += dataNibble;
         datax += `-${dataNibble}`;
-        this.sxAdd(sx, dataNibble);
+        sx.add(dataNibble);
       }
       i = j;
       // Trailer optional > 1 Space
-      if ((j < len - 1) && ((s[j] <= sx.data1[psixPulse]) && (s[j + 1] > sx.data1[psixSpace]))) {
+      if ((j < len - 1) && ((s[j] <= data1[psixPulse]) && (s[j + 1] > data1[psixSpace]))) {
         trailer += s[j++];
         trailer += s[j++];
-        this.sxAdd(sx, trailer);
+        sx.add(trailer);
         if (header.length > 0) {
           debugv(dataType, 'header', header, 'datax', datax, 'trailer', trailer, data.length, iLast, j, data);
         } else {
@@ -508,6 +517,7 @@ class PulseSpaceIndex {
    * @param {string} ps01f  6-char PS01 descriptor from detectPS01Values().
    * @returns {string|null} Tagged result `"<ps01f>:m:<hex>"`, or null if not applicable.
    */
+  // eslint-disable-next-line class-methods-use-this -- public method, keep instance API
   tryManchester(s, ps01f) {
     // Decode Manchester-encoded RF signal from PSI representation.
     // Manchester encoding uses two timing values: T (short, index 0) and 2T (long, index 1).
@@ -518,7 +528,8 @@ class PulseSpaceIndex {
     }
 
     const dataMax = 1; // PSI index values 0 and 1 are data; 2+ are header/trailer
-    const sx = { sx: `${ps01f}:m:`, hexMode: false, constantMode: false, bitCount: 0 };
+    const sx = sxBuilder(`${ps01f}:m:`);
+    let bitCount = 0;
     let i = 0;
     const len = s.length;
 
@@ -535,7 +546,7 @@ class PulseSpaceIndex {
         header += s[i++];
       }
       if (header.length > 0) {
-        this.sxAdd(sx, header);
+        sx.add(header);
       }
 
       if (i >= len - 1) break;
@@ -565,67 +576,64 @@ class PulseSpaceIndex {
         }
       }
 
-      if (half.length < 4) {
-        if (i <= iStart) i = iStart + 2;
-        continue;
-      }
-
+      if (half.length >= 4) {
       // Skip preamble: leading alternating H,L pairs (T-period clock bursts)
-      let pre = 0;
-      while (pre + 1 < half.length && half[pre] === true && half[pre + 1] === false) {
-        pre += 2;
-      }
-
-      // Decode Manchester bits from half-period pairs.
-      // H,L pair → bit 1 (G.E. Thomas: high-to-low mid-bit transition)
-      // L,H pair → bit 0 (G.E. Thomas: low-to-high mid-bit transition)
-      const bits = [];
-      let pos = pre;
-      while (pos + 1 < half.length) {
-        if (half[pos] === true && half[pos + 1] === false) {
-          bits.push(1);
-        } else if (half[pos] === false && half[pos + 1] === true) {
-          bits.push(0);
-        } else {
-          break; // violation: not valid Manchester
+        let pre = 0;
+        while (pre + 1 < half.length && half[pre] === true && half[pre + 1] === false) {
+          pre += 2;
         }
-        pos += 2;
-      }
 
-      debugv('tryManchester preamble', pre / 2, 'bits', bits.length, 'halfPeriods', half.length);
+        // Decode Manchester bits from half-period pairs.
+        // H,L pair → bit 1 (G.E. Thomas: high-to-low mid-bit transition)
+        // L,H pair → bit 0 (G.E. Thomas: low-to-high mid-bit transition)
+        const bits = [];
+        let pos = pre;
+        while (pos + 1 < half.length) {
+          if (half[pos] === true && half[pos + 1] === false) {
+            bits.push(1);
+          } else if (half[pos] === false && half[pos + 1] === true) {
+            bits.push(0);
+          } else {
+            break; // violation: not valid Manchester
+          }
+          pos += 2;
+        }
 
-      if (bits.length > 0) {
-        sx.bitCount += bits.length;
-        let nibble = '';
-        for (let b = 0; b < bits.length; b++) {
-          nibble += bits[b];
-          if (nibble.length === 4) {
-            this.sxAdd(sx, parseInt(nibble, 2).toString(16), false, true);
-            nibble = '';
+        debugv('tryManchester preamble', pre / 2, 'bits', bits.length, 'halfPeriods', half.length);
+
+        if (bits.length > 0) {
+          bitCount += bits.length;
+          let nibble = '';
+          for (let b = 0; b < bits.length; b++) {
+            nibble += bits[b];
+            if (nibble.length === 4) {
+              sx.add(parseInt(nibble, 2).toString(16), false, true);
+              nibble = '';
+            }
+          }
+          if (nibble.length > 0) {
+            sx.add(nibble); // partial trailing nibble
           }
         }
-        if (nibble.length > 0) {
-          this.sxAdd(sx, nibble); // partial trailing nibble
-        }
-      }
 
-      // Consume trailer section
-      let trailer = '';
-      while (i < len - 1) {
-        const p = parseInt(s[i], 16);
-        const sp = parseInt(s[i + 1], 16);
-        if (p <= dataMax && sp <= dataMax) break;
-        trailer += s[i++];
-        trailer += s[i++];
-      }
-      if (trailer.length > 0) {
-        this.sxAdd(sx, trailer);
+        // Consume trailer section
+        let trailer = '';
+        while (i < len - 1) {
+          const p = parseInt(s[i], 16);
+          const sp = parseInt(s[i + 1], 16);
+          if (p <= dataMax && sp <= dataMax) break;
+          trailer += s[i++];
+          trailer += s[i++];
+        }
+        if (trailer.length > 0) {
+          sx.add(trailer);
+        }
       }
 
       if (i <= iStart) i = iStart + 2;
     }
 
-    return sx.bitCount > 0 ? sx.sx : null;
+    return bitCount > 0 ? sx.sx : null;
   }
 
   /**
@@ -637,6 +645,7 @@ class PulseSpaceIndex {
    * @param {string} ps01f  6-char PS01 descriptor from detectPS01Values().
    * @returns {string|null} Tagged result `"<ps01f>:dm:<hex>"`, or null if not applicable.
    */
+  // eslint-disable-next-line class-methods-use-this -- public method, keep instance API
   tryDifferentialManchester(s, ps01f) {
     // Decode Differential Manchester (biphase mark) encoded RF signal from PSI.
     // Rules:
@@ -650,7 +659,8 @@ class PulseSpaceIndex {
     }
 
     const dataMax = 1;
-    const sx = { sx: `${ps01f}:dm:`, hexMode: false, constantMode: false, bitCount: 0 };
+    const sx = sxBuilder(`${ps01f}:dm:`);
+    let bitCount = 0;
     let i = 0;
     const len = s.length;
 
@@ -667,7 +677,7 @@ class PulseSpaceIndex {
         header += s[i++];
       }
       if (header.length > 0) {
-        this.sxAdd(sx, header);
+        sx.add(header);
       }
 
       if (i >= len - 1) break;
@@ -693,66 +703,63 @@ class PulseSpaceIndex {
         }
       }
 
-      if (half.length < 4) {
-        if (i <= iStart) i = iStart + 2;
-        continue;
-      }
-
+      if (half.length >= 4) {
       // Skip preamble: differential Manchester 1-bits produce same-polarity pairs
-      // (H,H or L,L). Advance past leading same-polarity pairs.
-      let pre = 0;
-      while (pre + 1 < half.length && half[pre] === half[pre + 1]) {
-        pre += 2;
-      }
-
-      // Decode bits. At each bit boundary (every 2 half-periods) after the first,
-      // the clock transition is mandatory: half[pos] must differ from half[pos-1].
-      const bits = [];
-      let pos = pre;
-      while (pos + 1 < half.length) {
-        if (pos > pre && half[pos] === half[pos - 1]) {
-          break; // missing clock boundary transition — not valid differential Manchester
+        // (H,H or L,L). Advance past leading same-polarity pairs.
+        let pre = 0;
+        while (pre + 1 < half.length && half[pre] === half[pre + 1]) {
+          pre += 2;
         }
-        // Same-polarity pair = no mid-bit transition = bit 1
-        // Different-polarity pair = mid-bit transition = bit 0
-        bits.push(half[pos] === half[pos + 1] ? 1 : 0);
-        pos += 2;
-      }
 
-      debugv('tryDifferentialManchester preamble', pre / 2, 'bits', bits.length, 'halfPeriods', half.length);
+        // Decode bits. At each bit boundary (every 2 half-periods) after the first,
+        // the clock transition is mandatory: half[pos] must differ from half[pos-1].
+        const bits = [];
+        let pos = pre;
+        while (pos + 1 < half.length) {
+          if (pos > pre && half[pos] === half[pos - 1]) {
+            break; // missing clock boundary transition — not valid differential Manchester
+          }
+          // Same-polarity pair = no mid-bit transition = bit 1
+          // Different-polarity pair = mid-bit transition = bit 0
+          bits.push(half[pos] === half[pos + 1] ? 1 : 0);
+          pos += 2;
+        }
 
-      if (bits.length > 0) {
-        sx.bitCount += bits.length;
-        let nibble = '';
-        for (let b = 0; b < bits.length; b++) {
-          nibble += bits[b];
-          if (nibble.length === 4) {
-            this.sxAdd(sx, parseInt(nibble, 2).toString(16), false, true);
-            nibble = '';
+        debugv('tryDifferentialManchester preamble', pre / 2, 'bits', bits.length, 'halfPeriods', half.length);
+
+        if (bits.length > 0) {
+          bitCount += bits.length;
+          let nibble = '';
+          for (let b = 0; b < bits.length; b++) {
+            nibble += bits[b];
+            if (nibble.length === 4) {
+              sx.add(parseInt(nibble, 2).toString(16), false, true);
+              nibble = '';
+            }
+          }
+          if (nibble.length > 0) {
+            sx.add(nibble);
           }
         }
-        if (nibble.length > 0) {
-          this.sxAdd(sx, nibble);
-        }
-      }
 
-      // Consume trailer
-      let trailer = '';
-      while (i < len - 1) {
-        const p = parseInt(s[i], 16);
-        const sp = parseInt(s[i + 1], 16);
-        if (p <= dataMax && sp <= dataMax) break;
-        trailer += s[i++];
-        trailer += s[i++];
-      }
-      if (trailer.length > 0) {
-        this.sxAdd(sx, trailer);
+        // Consume trailer
+        let trailer = '';
+        while (i < len - 1) {
+          const p = parseInt(s[i], 16);
+          const sp = parseInt(s[i + 1], 16);
+          if (p <= dataMax && sp <= dataMax) break;
+          trailer += s[i++];
+          trailer += s[i++];
+        }
+        if (trailer.length > 0) {
+          sx.add(trailer);
+        }
       }
 
       if (i <= iStart) i = iStart + 2;
     }
 
-    return sx.bitCount > 0 ? sx.sx : null;
+    return bitCount > 0 ? sx.sx : null;
   }
 
   /**
@@ -933,7 +940,7 @@ class PulseSpaceIndex {
     for (i = 0; i < pulseSpaceCount; i++) {
       const ps = pulses[i];
 
-      const psi = pulseSpace.find(a => a.ps === ps);
+      const psi = pulseSpace.find((a) => a.ps === ps);
       pulseSpace2 += psi.index.toString(16);
 
       // hex for 01, otherwise + space
@@ -992,7 +999,7 @@ class PulseSpaceIndex {
       if (!m) {
         return { skip: 'RFLink line without Pulses(uSec)=' };
       }
-      const pulses = Array.from(m[1].split(','), x => Number(x));
+      const pulses = Array.from(m[1].split(','), (x) => Number(x));
       const psi = new PulseSpaceIndex(null);
       if (!psi.microsToPsi(pulses, `rflink:${line}`, `rflink:${lineNo}`)) {
         return { skip: 'RFLink pulses not numeric' };
@@ -1000,18 +1007,23 @@ class PulseSpaceIndex {
       return { psi };
     }
     if (line.includes('AA B1 ')) {
-      // Tasmota Portisch Sonoff RFbridge v212:22:52.999 RSL: RESULT = {"Time":"2021-08-18T12:22:52","RfRaw":{"Data":"AA B1 03 0172 041A 2AF8 01010110010101010101011001010101010101100110010102 55"}}
+      // Tasmota Portisch Sonoff RFbridge, e.g.
+      //   12:22:52.999 RSL: RESULT = {"Time":"2021-08-18T12:22:52","RfRaw":
+      //   {"Data":"AA B1 03 0172 041A 2AF8 01010110010101010101011001010101010101100110010102 55"}}
       const m = line.match(/AA B1 .*55/);
       if (!m) {
         return { skip: 'Portisch line without trailing 55' };
       }
       const ptData = m[0].split(' ');
       const nrPulseLengths = Number(ptData[2]);
-      const pulseLengths = Array.from(ptData.slice(3, 3 + nrPulseLengths), x => parseInt(x, 16));
+      const pulseLengths = Array.from(ptData.slice(3, 3 + nrPulseLengths), (x) => parseInt(x, 16));
       const ppsi = ptData[3 + nrPulseLengths] || '';
       // portisch does not have buckets in time sequence so convert to pulses and use microsToPsi...
       // Als F protection
-      const pulses = Array.from(ppsi, x => (((parseInt(x, 16) & 0x07) < pulseLengths.length) ? pulseLengths[parseInt(x, 16) & 0x07] : (pulseLengths.length - 1)));
+      const pulses = Array.from(ppsi, (x) => {
+        const bucket = parseInt(x, 16) & 0x07;
+        return (bucket < pulseLengths.length) ? pulseLengths[bucket] : (pulseLengths.length - 1);
+      });
       const psi = new PulseSpaceIndex(null);
       if (!psi.microsToPsi(pulses, m, `Portisch Sorted:${lineNo}`)) {
         return { skip: 'Portisch data not numeric' };
@@ -1050,7 +1062,7 @@ class PulseSpaceIndex {
     const pulsess = line.split(' ');
     const protocol = pulsess[0];
     pulsess.shift();
-    const pulses = Array.from(pulsess, x => Number(x));
+    const pulses = Array.from(pulsess, (x) => Number(x));
     const psi = new PulseSpaceIndex(null);
     if (!psi.microsToPsi(pulses, `pilight:${line}`, `pilight:${protocol}`)) {
       return { skip: 'unrecognised line' };
@@ -1062,7 +1074,6 @@ class PulseSpaceIndex {
 module.exports = PulseSpaceIndex;
 
 if (require.main === module) {
-  const path = require('path');
   // eslint-disable-next-line global-require
   const { version } = require('./package.json');
   const inputFile = process.argv[2];

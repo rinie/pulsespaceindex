@@ -23,14 +23,13 @@
   "author": {
     "name": "Rinie Kervel"
   },
-  "bundleDependencies": false,
   "dependencies": {
     "debug": "^4.4.0"
   },
   "devDependencies": {
-    "eslint": "^8.57.0",
-    "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-plugin-import": "^2.32.0"
+    "eslint": "^9.39.5",
+    "eslint-config-airbnb-extended": "^3.3.0",
+    "globals": "^17.14.0"
   },
   "deprecated": false,
   "description": "Ook pulse (On) Space (Off) Index processing",
@@ -46,7 +45,8 @@
   "main": "index.js",
   "name": "pulsespaceindex",
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "lint": "eslint ."
   },
   "repository": {
     "type": "git",
