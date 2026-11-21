@@ -13,12 +13,17 @@ All notable changes to pulsespaceindex are documented here.
 - **ESLint 9 with flat config.** ESLint 8 is end of life and the official
   `eslint-config-airbnb-base` only supports ESLint 7/8, so `.eslintrc.js` is
   replaced by `eslint.config.mjs` using `eslint-config-airbnb-extended/legacy`,
-  a port of the same Airbnb base rules. `samples/` and `arduino/` are not
-  linted. New `npm run lint` script; CI runs it.
+  a port of the same Airbnb base rules. `arduino/` is not linted. New
+  `npm run lint` script; CI runs it.
 - **Source passes Airbnb lint.** Formatting fixes, unused variables removed,
   `!=` replaced by `!==`, `continue` removed from the Manchester decoders.
   The internal `sxAdd()` method is replaced by a module-level psx builder.
   CLI output is unchanged.
+- **`samples/*.js` pass Airbnb lint.** Formatting only; the exported sample
+  data is unchanged apart from tabs replaced by spaces in one pimatic
+  `comment`. `samples/rtl_433_ook_pulse_nrz.js` and
+  `samples/rtl_433_ook_pulse_pwm.js` are excluded: they are still rtl_433 C
+  source, not JavaScript.
 - **`microsToPsi()` rejects bad input** (empty, non-array, NaN, Infinity,
   negative or non-number values) instead of throwing. It returns `false` and
   sets `psi` to `null`; `analyse()` then returns `''`. On valid input it
