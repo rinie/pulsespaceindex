@@ -1,6 +1,91 @@
 # pulsespaceindex
 PulseSpaceIndex node.js ES6 for analyzing OOK 433 and RF signals
 
+![CI](https://github.com/rinie/pulsespaceindex/actions/workflows/ci.yml/badge.svg)
+
+Normalises raw pulse/space timings from different receivers (Broadlink RM,
+RFLink, Sonoff RF Bridge with Portisch, pilight, pimatic, Nodo/Arduino) into a
+compact, comparable form, so the same remote gives the same result whatever
+receiver captured it.
+
+## Install
+
+Requires Node.js 22 or later.
+
+```sh
+npm install git+https://github.com/rinie/pulsespaceindex.git
+```
+
+## Library usage
+
+```js
+const PulseSpaceIndex = require('pulsespaceindex');
+
+// Alternating pulse/space durations in microseconds
+const pulses = [2700, 120, 210, 120, 1200 /* ... */];
+
+const p = new PulseSpaceIndex(null);
+p.microsToPsi(pulses, 'my capture', 'rflink');
+p.analyse();          // also prints p.format() to stdout
+
+p.psi;                // '0200010100...' timing-bucket index per pulse/space
+p.micros;             // [145, 1203, 2700, 6990] bucket durations in µs
+p.psx;                // '000102:02x6aa99595999a9955-03'
+p.format();           // "132 145,1203,2700,6990 '000102:02x...' rflink"
+```
+
+If the signal is already a PSI string, pass it to the constructor:
+
+```js
+new PulseSpaceIndex(psi, micros, frameCount, signalType, tryMan);
+```
+
+| Parameter | Default | Meaning |
+|-----------|---------|---------|
+| `psi` | — | Hex PSI string, or `null` when using `microsToPsi` |
+| `micros` | `null` | Bucket durations in µs (index → duration) |
+| `frameCount` | `1` | Number of repeated frames |
+| `signalType` | `'ook433'` | Free-form source label |
+| `tryMan` | `true` | Try Manchester / Differential Manchester decoding |
+
+### Reading `psx`
+
+`psx` starts with a 6-character **ps01f** descriptor: the bucket indices for
+pulse 0, space 0, pulse 1, space 1, header/trailer pulse and header/trailer
+space. After the colon comes the decoded frame:
+
+- `x6aa9...`: data bits packed 4 per hex digit
+- `-01`: leftover bits (fewer than 4)
+- `02`, `03`: header/trailer bucket indices between frames
+- `:m:` / `:dm:` after ps01f: decoded as Manchester / Differential Manchester
+  (only tried when the long/short timing ratio is about 2:1 and the signal has
+  at least 40 symbols)
+
+## Command line
+
+```sh
+node pulsespaceindex.js samples/pimaticsamples.js
+node pulsespaceindex.js samples/kaku.txt
+node pulsespaceindex.js --help
+```
+
+Accepts JS sample modules (broadlink, pimatic, Nodo/Arduino formats) and text or
+CSV captures (RFLink `Pulses(uSec)=`, Tasmota/Portisch `AA B1 ... 55`, pilight
+space-separated lines). Set `DEBUG=psi`, `DEBUG=psiv` or `DEBUG=*` for
+detailed tracing.
+
+## Development
+
+```sh
+npm install
+npm test        # node:test, see test.js
+```
+
+CI runs the tests on Node 22 and 24. Changes are listed in
+[CHANGELOG.md](CHANGELOG.md).
+
+## Background notes
+
 Previously pulsespaceindex.h used in Arduino projects (Nodo/Embapps/he853 remote).
 Now using Broadlink RM or Sonoff RF Bridge 433 move this to NodeJS
 Also include samples from LIRC/RfLink/PiMatic/PiLight and Portisch
