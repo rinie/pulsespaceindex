@@ -26,12 +26,13 @@ const pulses = [2700, 120, 210, 120, 1200 /* ... */];
 
 const p = new PulseSpaceIndex(null);
 p.microsToPsi(pulses, 'my capture', 'rflink');
-p.analyse();          // also prints p.format() to stdout
+p.analyse();          // returns p.psx; prints nothing (DEBUG=psio to log)
 
 p.psi;                // '0200010100...' timing-bucket index per pulse/space
 p.micros;             // [145, 1203, 2700, 6990] bucket durations in µs
 p.psx;                // '000102:02x6aa99595999a9955-03'
 p.format();           // "132 145,1203,2700,6990 '000102:02x...' rflink"
+p.print();            // console.log(p.format())
 ```
 
 If the signal is already a PSI string, pass it to the constructor:
@@ -72,7 +73,7 @@ node pulsespaceindex.js --help
 Accepts JS sample modules (broadlink, pimatic, Nodo/Arduino formats) and text or
 CSV captures (RFLink `Pulses(uSec)=`, Tasmota/Portisch `AA B1 ... 55`, pilight
 space-separated lines). Set `DEBUG=psi`, `DEBUG=psiv` or `DEBUG=*` for
-detailed tracing.
+detailed tracing. In library use, `DEBUG=psio` logs each `analyse()` result.
 
 ## Development
 
