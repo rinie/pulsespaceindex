@@ -21,9 +21,11 @@ All notable changes to pulsespaceindex are documented here.
   CLI output is unchanged.
 - **`samples/*.js` pass Airbnb lint.** Formatting only; the exported sample
   data is unchanged apart from tabs replaced by spaces in one pimatic
-  `comment`. `samples/rtl_433_ook_pulse_nrz.js` and
-  `samples/rtl_433_ook_pulse_pwm.js` are excluded: they are still rtl_433 C
-  source, not JavaScript.
+  `comment`.
+- **rtl_433 C reference files renamed to `.c`.** `samples/rtl_433_ook_pulse_nrz.js`
+  and `samples/rtl_433_ook_pulse_pwm.js` held rtl_433 C source, not JavaScript;
+  they are now `samples/rtl_433_ook_pulse_nrz.c` and
+  `samples/rtl_433_ook_pulse_pwm.c` and need no lint exclusion.
 - **`microsToPsi()` rejects bad input** (empty, non-array, NaN, Infinity,
   negative or non-number values) instead of throwing. It returns `false` and
   sets `psi` to `null`; `analyse()` then returns `''`. On valid input it

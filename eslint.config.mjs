@@ -6,13 +6,7 @@ import { configs } from 'eslint-config-airbnb-extended/legacy';
 
 export default [
   {
-    ignores: [
-      'node_modules/',
-      'arduino/',
-      // rtl_433 device tables still in their original C, not yet converted to JS
-      'samples/rtl_433_ook_pulse_nrz.js',
-      'samples/rtl_433_ook_pulse_pwm.js',
-    ],
+    ignores: ['node_modules/', 'arduino/'],
   },
   ...configs.base.recommended,
   {
