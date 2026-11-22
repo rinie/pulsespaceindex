@@ -2,46 +2,56 @@
 
 All notable changes to pulsespaceindex are documented here.
 
-## [Unreleased]
+## [2.0.0] - 2026-11-22
+
+Breaking for library users: `analyse()` no longer prints, and
+`microsToPsi()` no longer throws on bad input. Command-line output is
+unchanged for all sample files.
 
 ### Changed
 - **`analyse()` no longer prints.** It returns `psx` and writes nothing to
   stdout; set `DEBUG=psio` to log each result through the `debug` module.
   Library code that relied on the printed line should call `print()` (or use
-  `format()`) after `analyse()`. Command-line output is unchanged: the CLI now
-  calls `print()` itself.
-- **ESLint 9 with flat config.** ESLint 8 is end of life and the official
-  `eslint-config-airbnb-base` only supports ESLint 7/8, so `.eslintrc.js` is
-  replaced by `eslint.config.mjs` using `eslint-config-airbnb-extended/legacy`,
-  a port of the same Airbnb base rules. `arduino/` is not linted. New
-  `npm run lint` script; CI runs it.
-- **Source passes Airbnb lint.** Formatting fixes, unused variables removed,
-  `!=` replaced by `!==`, `continue` removed from the Manchester decoders.
-  The internal `sxAdd()` method is replaced by a module-level psx builder.
-  CLI output is unchanged.
-- **`samples/*.js` pass Airbnb lint.** Formatting only; the exported sample
-  data is unchanged apart from tabs replaced by spaces in one pimatic
-  `comment`.
-- **rtl_433 C reference files renamed to `.c`.** `samples/rtl_433_ook_pulse_nrz.js`
-  and `samples/rtl_433_ook_pulse_pwm.js` held rtl_433 C source, not JavaScript;
-  they are now `samples/rtl_433_ook_pulse_nrz.c` and
-  `samples/rtl_433_ook_pulse_pwm.c` and need no lint exclusion.
+  `format()`) after `analyse()`. The CLI now calls `print()` itself.
 - **`microsToPsi()` rejects bad input** (empty, non-array, NaN, Infinity,
   negative or non-number values) instead of throwing. It returns `false` and
   sets `psi` to `null`; `analyse()` then returns `''`. On valid input it
   returns `true`.
+- **ESLint 9 with flat config.** ESLint 8 is end of life and the official
+  `eslint-config-airbnb-base` only supports ESLint 7/8, so `.eslintrc.js` is
+  replaced by `eslint.config.mjs` using `eslint-config-airbnb-extended/legacy`,
+  a port of the same Airbnb base rules. New `npm run lint` script; CI runs it
+  before the tests. `arduino/` is not linted.
+- **Source and `samples/*.js` pass Airbnb lint.** Formatting fixes, unused
+  variables removed, `!=` replaced by `!==`, `continue` removed from the
+  Manchester decoders. The exported sample data is unchanged apart from tabs
+  replaced by spaces in one pimatic `comment`.
+- **rtl_433 C reference files renamed to `.c`.** `samples/rtl_433_ook_pulse_nrz.js`
+  and `samples/rtl_433_ook_pulse_pwm.js` held rtl_433 C source, not
+  JavaScript; they are now `samples/rtl_433_ook_pulse_nrz.c` and
+  `samples/rtl_433_ook_pulse_pwm.c`.
 
 ### Added
 - **`PulseSpaceIndex.parseLine(line, lineNo)`**: the CLI's text/CSV line
   parsing, now usable and testable on its own.
 - **PSI text input** (`samples/kaku.txt`): lines of the older output format
   `<count> , '<psi>' , <n> , <µs0> <µs1> ... , <name>` are analysed directly.
+- Tests for `microsToPsi()` input checks, `parseLine()` and the CLI on
+  `samples/kaku.txt` and `samples/debugkaku20210823.csv` (32 tests in total).
+
+### Removed
+- The undocumented `sxAdd()` method. It is replaced by a module-level psx
+  builder used by `psix()`, `tryManchester()` and `tryDifferentialManchester()`.
 
 ### Fixed
 - `samples/kaku.txt` and `samples/debugkaku20210823.csv` no longer crash the
   CLI. Lines in the current output format (`<count> <µs,...> '<psx>' ...`) are
   skipped with one summary on stderr, since psx is a result, not pulse data.
   Other unrecognised lines are skipped with a per-line warning on stderr.
+- An RFLink line without `Pulses(uSec)=` or a Portisch `AA B1` line without the
+  closing `55` is skipped with a warning instead of crashing.
+
+---
 
 ## [1.1.0] - 2026-11-06
 
