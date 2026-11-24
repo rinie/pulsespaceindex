@@ -16,6 +16,8 @@ All notable changes to pulsespaceindex are documented here.
 - `package-lock.json` regenerated from the public npm registry; the dev tree
   drops from 345 to 86 packages.
 - CI also runs on Node 26 (LTS).
+- `package.json` declares `"engines": { "node": ">=22" }`, so npm warns when
+  installing on an older Node.
 
 ## [2.0.0] - 2026-11-22
 
