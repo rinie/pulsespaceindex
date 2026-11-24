@@ -1,14 +1,14 @@
-// ESLint flat config: Airbnb base style (ESLint 9).
-// eslint-config-airbnb-extended/legacy ports the rules of the official
-// eslint-config-airbnb-base, which only supports ESLint 7/8.
+// ESLint flat config (ESLint 10): recommended rules, always semicolons,
+// plus a few correctness rules that recommended leaves out.
+import js from '@eslint/js';
+import stylistic from '@stylistic/eslint-plugin';
 import globals from 'globals';
-import { configs } from 'eslint-config-airbnb-extended/legacy';
 
 export default [
   {
     ignores: ['node_modules/', 'arduino/'],
   },
-  ...configs.base.recommended,
+  js.configs.recommended,
   {
     files: ['**/*.js'],
     languageOptions: {
@@ -18,18 +18,17 @@ export default [
         ...globals.node,
       },
     },
-    rules: {
-      'linebreak-style': 'off', // files are edited on Windows (CRLF) and Linux
-      'no-console': 'off', // CLI prints to stdout/stderr
-      'no-bitwise': 'off', // PSI decoding works on bits
-      'no-plusplus': 'off',
-    },
   },
   {
-    files: ['eslint.config.mjs'],
+    plugins: {
+      '@stylistic': stylistic,
+    },
     rules: {
-      // eslint-plugin-import cannot resolve this ESM-only subpath export
-      'import/no-unresolved': 'off',
+      '@stylistic/semi': ['error', 'always'],
+      '@stylistic/no-extra-semi': 'error',
+      eqeqeq: ['error', 'always'],
+      'prefer-const': 'error',
+      'no-var': 'error',
     },
   },
 ];

@@ -80,10 +80,10 @@ detailed tracing. In library use, `DEBUG=psio` logs each `analyse()` result.
 ```sh
 npm install
 npm test        # node:test, see test.js
-npm run lint    # ESLint 9, Airbnb base style (eslint.config.mjs)
+npm run lint    # ESLint 10, recommended rules + semicolons (eslint.config.mjs)
 ```
 
-CI runs lint and the tests on Node 22 and 24. Changes are listed in
+CI runs lint and the tests on Node 22, 24 and 26. Changes are listed in
 [CHANGELOG.md](CHANGELOG.md).
 
 ## Background notes

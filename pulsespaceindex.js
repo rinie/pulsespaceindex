@@ -427,7 +427,6 @@ class PulseSpaceIndex {
    * todo: Manchester/Biphase
    * todo: Header/header data Trailer/Pause. Longer signal or repeated 1s
    */
-  // eslint-disable-next-line class-methods-use-this -- public method, keep instance API
   psix(s, ps01f) {
     const dataType = ((ps01f[0] !== ps01f[2]) ? 'p' : '') + ((ps01f[1] !== ps01f[3]) ? 's' : '');
     const sx = sxBuilder(`${ps01f}:`);
@@ -456,7 +455,6 @@ class PulseSpaceIndex {
       if (j > i) {
         // debugv('header', header, i, j);
         sx.add(header);
-        i = j;
       }
 
       // data <= 1 section
@@ -484,7 +482,6 @@ class PulseSpaceIndex {
         datax += `-${dataNibble}`;
         sx.add(dataNibble);
       }
-      i = j;
       // Trailer optional > 1 Space
       if ((j < len - 1) && ((s[j] <= data1[psixPulse]) && (s[j + 1] > data1[psixSpace]))) {
         trailer += s[j++];
@@ -517,7 +514,6 @@ class PulseSpaceIndex {
    * @param {string} ps01f  6-char PS01 descriptor from detectPS01Values().
    * @returns {string|null} Tagged result `"<ps01f>:m:<hex>"`, or null if not applicable.
    */
-  // eslint-disable-next-line class-methods-use-this -- public method, keep instance API
   tryManchester(s, ps01f) {
     // Decode Manchester-encoded RF signal from PSI representation.
     // Manchester encoding uses two timing values: T (short, index 0) and 2T (long, index 1).
@@ -645,7 +641,6 @@ class PulseSpaceIndex {
    * @param {string} ps01f  6-char PS01 descriptor from detectPS01Values().
    * @returns {string|null} Tagged result `"<ps01f>:dm:<hex>"`, or null if not applicable.
    */
-  // eslint-disable-next-line class-methods-use-this -- public method, keep instance API
   tryDifferentialManchester(s, ps01f) {
     // Decode Differential Manchester (biphase mark) encoded RF signal from PSI.
     // Rules:
@@ -968,10 +963,6 @@ class PulseSpaceIndex {
       }
       // console.log('psx ', psxi, psx.toString(16), psi.index, pulseSpaceX);
     }
-    if (psxi > 0) {
-      pulseSpaceX += psx.toString(16).toUpperCase();
-      psxi = 0;
-    }
     // put in this
     this.psi = pulseSpace2;
     this.count = this.psi.length;
@@ -1074,7 +1065,6 @@ class PulseSpaceIndex {
 module.exports = PulseSpaceIndex;
 
 if (require.main === module) {
-  // eslint-disable-next-line global-require
   const { version } = require('./package.json');
   const inputFile = process.argv[2];
 
@@ -1120,7 +1110,6 @@ Debug:
   if (inputFile.toLowerCase().endsWith('.js')) { // js module
     debug(`Samples: ${inputFile}`);
 
-    // eslint-disable-next-line import/no-dynamic-require,global-require
     const samples = require(inputPath);
     for (let j = 0; j < samples.samples.length; j++) {
       const sample = samples.samples[j];
