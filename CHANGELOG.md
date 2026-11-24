@@ -2,6 +2,21 @@
 
 All notable changes to pulsespaceindex are documented here.
 
+## [Unreleased]
+
+### Changed
+- **ESLint 10 with recommended rules.** Replaces ESLint 9 and
+  `eslint-config-airbnb-extended`, which does not support ESLint 10.
+  `eslint.config.mjs` uses `@eslint/js` recommended plus always-semicolons
+  (`@stylistic/semi`, `@stylistic/no-extra-semi`), `eqeqeq`, `prefer-const`
+  and `no-var`. Airbnb style rules (indentation, quotes, spacing) are no
+  longer checked. `npm run lint` still lints every script.
+- Removed the Airbnb `eslint-disable` comments in `pulsespaceindex.js` and four
+  assignments whose values were never read. No behaviour change.
+- `package-lock.json` regenerated from the public npm registry; the dev tree
+  drops from 345 to 86 packages.
+- CI also runs on Node 26 (LTS).
+
 ## [2.0.0] - 2026-11-22
 
 Breaking for library users: `analyse()` no longer prints, and
